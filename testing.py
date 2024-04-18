@@ -51,7 +51,7 @@ def generate_population(N):
     return population
 
 def integer_list(population):
-    population[0] = [0.25, 0.45, 0.75, 1.54, 1.60, 1.67, 1.78, 2.09, 2.37, 4.25, 3.2,3.5]
+    population[0] = [1.78,0.45, 0.75, 2.09 , 1.54, 4.25, 1.67, 2.37, 0.25, 1.60, 6.2,6.5]
     ranked_population = []
     for i in range(N):
         sorted_list = []
