@@ -1,7 +1,7 @@
 class Operation:
-    def __init__(self, job_number, operation_number):
+    def __init__(self, job_number):
         self.job_number = job_number
-        self.operation_number = operation_number
+        self.operation_number = 0
         self.machine = None
         self.Pj = None
         self.start_time = 0

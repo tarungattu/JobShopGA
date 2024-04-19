@@ -90,12 +90,20 @@ def schedule_operations(population, jobs):
         for i in range(len(chromosome)):
             explored.append(chromosome[i])
             numcount = explored.count(chromosome[i])
-            operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
+            operation_list.append(jobs[chromosome[i]].operations[numcount - 1])
     return operation_list
 
+# gives each operation a job number of whihc job it is part of
 def install_operations(jobs):
     for job in jobs:
         job.operations = [Operation(job.job_number) for i in range(m)]
+        
+def assign_data_to_operations(jobs, operation_data):
+    for job,sublist in zip(jobs, operation_data):
+        for operation,i in zip(job.operations, range(m)):
+            operation.operation_number = i
+            operation.machine = sublist[i][0]
+            operation.Pj = sublist[i][1]
             
 
 operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -109,14 +117,22 @@ assign_operations(jobs, operation_data)
 initial_population = generate_population(N)
 ranked_population = integer_list(initial_population)
 operation_index_pop = getJobindex(ranked_population)
+
+#install the operations in each job
+install_operations(jobs)
+assign_data_to_operations(jobs, operation_data)
+#create sequence with actual operations
 operation_schedule = schedule_operations(operation_index_pop, jobs)
 
 if print_out:
     print(operation_data)
-    print('Job 1 operations', jobs[0].operations)
-    print('Job 2 operations', jobs[1].operations)
-    print('Job 3 operations',jobs[2].operations)
+    print('Job 0 operations', jobs[0].operations[0].job_number)
+    print('Job 1 operations', jobs[1].operations[1].job_number)
+    print('Job 2 operations',jobs[2].operations)
     print('initial population: \n', initial_population)
     print('ranked list:\n', ranked_population)
     print('job operation sequence list:\n', operation_index_pop)
-    print('operation schedule:\n', operation_schedule)
+    print('job operation sequence:\n', operation_schedule)
+    
+    for operation in operation_schedule:
+        print(f'operation of job number: {operation.job_number},operation number: {operation.operation_number}, operation machine number :{ operation.machine}, processing time:{operation.Pj}')
