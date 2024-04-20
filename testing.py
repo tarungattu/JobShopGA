@@ -90,7 +90,8 @@ def schedule_operations(population, jobs):
         for i in range(len(chromosome)):
             explored.append(chromosome[i])
             numcount = explored.count(chromosome[i])
-            operation_list.append(jobs[chromosome[i] - 1].operations[numcount - 1])   # possible bug: difference in answer when input is given directly.
+            if numcount <= m:
+                operation_list.append(jobs[chromosome[i] - 1].operations[numcount - 1])   # possible bug: difference in answer when input is given directly.
 
     return operation_list
 
