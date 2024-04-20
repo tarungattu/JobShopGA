@@ -90,9 +90,8 @@ def schedule_operations(population, jobs):
         for i in range(len(chromosome)):
             explored.append(chromosome[i])
             numcount = explored.count(chromosome[i])
-            operation_list.append(jobs[chromosome[i] - 1].operations[numcount - 1])
-    
-    
+            operation_list.append(jobs[chromosome[i] - 1].operations[numcount - 1])   # possible bug: difference in answer when input is given directly.
+
     return operation_list
 
 # gives each operation a job number of whihc job it is part of
@@ -127,17 +126,14 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
         if operation.operation_number == 0:
             operation.start_time = machines[operation.machine].finish_operation_time
             operation.Cj = operation.start_time + operation.Pj
-            # machines[operation.machine].start_operation_time = operation.start_time
-            # machines[operation.machine].finish_operation_time = operation.start_time + operation.Pj
             machines[operation.machine].finish_operation_time = operation.Cj
             print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
+            
         else:
             if jobs[operation.job_number].operations[operation.operation_number - 1].Cj < machines[operation.machine].  finish_operation_time:
                 operation.start_time = machines[operation.machine].finish_operation_time
                 operation.Cj = operation.start_time + operation.Pj
                 machines[operation.machine].finish_operation_time = operation.Cj
-                # machines[operation.machine].start_operation_time = operation.start_time
-                # machines[operation.machine].finish_operation_time = operation.start_time + operation.Cj
                 print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
             else:
@@ -145,7 +141,6 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
                 operation.Cj = operation.start_time + operation.Pj
                 if operation.Pj != 0:
                     machines[operation.machine].finish_operation_time = operation.Cj
-                # machines[operation.machine].finish_operation_time = operation.start_time + operation.Cj
                 print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
 def get_Cmax(machines):
@@ -168,13 +163,19 @@ initial_population = generate_population(N)
 ranked_population = integer_list(initial_population)
 operation_index_pop = getJobindex(ranked_population)
 
-#install the operations in each job
+# CASE 1
+# operation_index_pop = [[2, 0, 2, 1, 0, 2, 0, 1, 1, 1, 2, 0]]
+
+# CASE 2
+# operation_index_pop = [[0, 1, 2, 1, 0, 0, 2, 2, 1, 1, 0, 2]] 
+
+# install the operations in each job
 install_operations(jobs)
 assign_data_to_operations(jobs, operation_data)
-#create sequence with actual operations
+# create sequence with actual operations
 operation_schedule = schedule_operations(operation_index_pop, jobs)
 
-#get the sequence of machines
+# get the sequence of machines
 machine_sequence = get_machine_sequence(operation_schedule)
 
 # get the sequence of processing times
@@ -196,7 +197,7 @@ if print_out:
     print(f'ptime sequence: {ptime_sequence}')
     
     for operation in operation_schedule:
-        print(f'operation of job number: {operation.job_number},operation number: {operation.operation_number}, operation machine number :{ operation.machine}, processing time:{operation.Pj}\n Start time: {operation.start_time}, Pj: {operation.Pj }, Cj: {operation.Cj}')
+        print(f'\n operation of job number: {operation.job_number},operation number: {operation.operation_number}, operation machine number :{ operation.machine}, processing time:{operation.Pj}\n Start time: {operation.start_time}, Pj: {operation.Pj }, Cj: {operation.Cj}')
         
     for machine in machines:
         print(f'machine number: {machine.machine_id}, machine finish: {machine.finish_operation_time}')
