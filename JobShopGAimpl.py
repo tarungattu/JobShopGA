@@ -6,6 +6,7 @@ import math
 from job import Job
 from machine import Machine
 from operation import Operation
+from chromosome import Chromosome
 
 m = 4
 n = 3
@@ -16,14 +17,24 @@ machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
 ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 
-
+# print out necessary
 if len(sys.argv) > 1:
     print_out = sys.argv[1].lower() == 'true'
 else:
     # Default value if no command-line argument is provided
     print_out = False
     
+if len(sys.argv) > 1:
+    test_old_prog = sys.argv[1].lower() == 'old'
+else:
+    # Default value if no command-line argument is provided
+    test_old_prog = False
 
+if len(sys.argv) > 1:
+    processing = sys.argv[1].lower() == 'proc'
+else:
+    # Default value if no command-line argument is provided
+    processing = False
 
 def create_operation_data(machine_data, ptime_data, m):
     matrix = []
@@ -37,6 +48,12 @@ def create_operation_data(machine_data, ptime_data, m):
     if sublist:
         matrix.append(sublist)
     return matrix
+    
+    # merged_array = np.array([machine_data, ptime_data])
+
+    # # Reshape the array to get the desired format
+    # reshaped_array = merged_array.reshape((len(machine_data) // len(set(machine_data)), len(set(machine_data)), 2))
+    # return reshaped_array
 
 def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
@@ -67,6 +84,23 @@ def integer_list(population):
         
     return ranked_population
 
+def induv_integer_list(chromosome):
+    ranked_population = []
+    sorted_list = []
+    ranks = {}
+    # Sort the list to get ranks in ascending order
+    sorted_list = sorted(chromosome)
+            
+    # Create a dictionary to store the ranks of each float number
+    ranks = {value: index for index, value in enumerate(sorted_list)}
+            
+    # Convert each float number to its corresponding rank
+    rank_list = [ranks[value] for value in chromosome]
+    ranked_population.append(rank_list)
+        
+    return rank_list
+    
+    
 # get job operation sequence
 def getJobindex(population):
     new_index = 0
@@ -81,6 +115,20 @@ def getJobindex(population):
     
     return operation_index_pop
 
+def induv_getJobindex(chromosome):
+    new_index = 0
+    operation_index_pop = []
+
+    tlist = []
+    temp = chromosome
+    for j in range(len(chromosome)):
+        new_index = (temp[j] % n) + 1
+        tlist.append(new_index)
+    operation_index_pop = tlist
+    
+    return operation_index_pop
+    
+
 def schedule_operations(population, jobs):
     operation_list = []
     explored = []
@@ -91,6 +139,17 @@ def schedule_operations(population, jobs):
             numcount = explored.count(chromosome[i])
             if numcount <= m:
                 operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
+    return operation_list
+
+def induv_schedule_operations(chromosome, jobs):
+    operation_list = []
+    explored = []
+    
+    for i in range(len(chromosome) - 1):
+        explored.append(chromosome[i])
+        numcount = explored.count(chromosome[i])
+        if numcount <= m:
+            operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
     return operation_list
             
 # gives each operation a job number of whihc job it is part of
@@ -127,21 +186,21 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
             operation.start_time = machines[operation.machine].finish_operation_time
             operation.Cj = operation.start_time + operation.Pj
             machines[operation.machine].finish_operation_time = operation.Cj
-            print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
+            # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
             
         else:
             if jobs[operation.job_number].operations[operation.operation_number - 1].Cj < machines[operation.machine].  finish_operation_time:
                 operation.start_time = machines[operation.machine].finish_operation_time
                 operation.Cj = operation.start_time + operation.Pj
                 machines[operation.machine].finish_operation_time = operation.Cj
-                print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
+                # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
             else:
                 operation.start_time = jobs[operation.job_number].operations[operation.operation_number - 1].Cj
                 operation.Cj = operation.start_time + operation.Pj
                 if operation.Pj != 0:
                     machines[operation.machine].finish_operation_time = operation.Cj
-                print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
+                # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
 def get_Cmax(machines):
     runtimes = []
@@ -150,57 +209,118 @@ def get_Cmax(machines):
         
     return max(runtimes)
 
-
-operation_data = create_operation_data(machine_data,ptime_data, m)
-
-
-jobs = [Job(number) for number in range(n)]
-machines = [Machine(number) for number in range(m)]
-
-
-assign_operations(jobs, operation_data)
-
-initial_population = generate_population(N)
-ranked_population = integer_list(initial_population)
-operation_index_pop = getJobindex(ranked_population)
-
-# CASE 1
-# operation_index_pop = [[2, 0, 2, 1, 0, 2, 0, 1, 1, 1, 2, 0]]
-
-# CASE 2
-# operation_index_pop = [[0, 1, 2, 1, 0, 0, 2, 2, 1, 1, 0, 2]] 
-
-# install the operations in each job
-install_operations(jobs)
-assign_data_to_operations(jobs, operation_data)
-# create sequence with actual operations
-operation_schedule = schedule_operations(operation_index_pop, jobs)
-
-# get the sequence of machines
-machine_sequence = get_machine_sequence(operation_schedule)
-
-# get the sequence of processing times
-ptime_sequence = get_processing_times(operation_schedule)
-
-calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_sequence)
-Cmax = get_Cmax(machines)
-
-if print_out:
+def process_chromosome(chromosome):
+    operation_data = create_operation_data(machine_data,ptime_data, m)
     print(operation_data)
-    print('Job 0 operations', jobs[0].operations[0].job_number)
-    print('Job 1 operations', jobs[1].operations[1].job_number)
-    print('Job 2 operations',jobs[2].operations)
-    print('initial population: \n', initial_population)
-    print('ranked list:\n', ranked_population)
-    print('job operation sequence list:\n', operation_index_pop)
-    print('job operation sequence:\n', operation_schedule)
-    print(f'machine sequence: {machine_sequence}')
-    print(f'ptime sequence: {ptime_sequence}')
+    jobs = [Job(number) for number in range(n)]
+    machines = [Machine(number) for number in range(m)]
+    assign_operations(jobs, operation_data)
     
-    for operation in operation_schedule:
-        print(f'\n operation of job number: {operation.job_number},operation number: {operation.operation_number}, operation machine number :{ operation.machine}, processing time:{operation.Pj}\n Start time: {operation.start_time}, Pj: {operation.Pj }, Cj: {operation.Cj}')
+    ranked_list = induv_integer_list(chromosome)
+    operation_index_list = induv_getJobindex(ranked_list)
+    install_operations(jobs)
+    assign_data_to_operations(jobs, operation_data)
+    operation_schedule = induv_schedule_operations(operation_index_list, jobs)
+    
+    # get the sequence of machines
+    machine_sequence = get_machine_sequence(operation_schedule)
+    
+    # get the sequence of processing times
+    ptime_sequence = get_processing_times(operation_schedule)
+    
+    calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_sequence)
+    Cmax = get_Cmax(machines)
+    
+    chromosome = Chromosome(chromosome)
         
-    for machine in machines:
-        print(f'machine number: {machine.machine_id}, machine finish: {machine.finish_operation_time}')
+    chromosome.ranked_list = ranked_list
+    chromosome.operation_index_list = operation_index_list
+    chromosome.operation_schedule = operation_schedule
+    chromosome.machine_sequence = machine_sequence
+    chromosome.ptime_sequence = ptime_sequence
+    chromosome.Cmax = Cmax
+    
+    return chromosome
+
+
+    
+
+
+def main1():
+    operation_data = create_operation_data(machine_data,ptime_data, m)
+
+
+    jobs = [Job(number) for number in range(n)]
+    machines = [Machine(number) for number in range(m)]
+
+
+    assign_operations(jobs, operation_data)
+
+    initial_population = generate_population(N)
+    ranked_population = integer_list(initial_population)
+    operation_index_pop = getJobindex(ranked_population)
+
+    # CASE 1
+    # operation_index_pop = [[2, 0, 2, 1, 0, 2, 0, 1, 1, 1, 2, 0]]
+
+    # CASE 2
+    # operation_index_pop = [[0, 1, 2, 1, 0, 0, 2, 2, 1, 1, 0, 2]] 
+
+    # install the operations in each job
+    install_operations(jobs)
+    assign_data_to_operations(jobs, operation_data)
+    # create sequence with actual operations
+    operation_schedule = schedule_operations(operation_index_pop, jobs)
+
+    # get the sequence of machines
+    machine_sequence = get_machine_sequence(operation_schedule)
+
+    # get the sequence of processing times
+    ptime_sequence = get_processing_times(operation_schedule)
+
+    calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_sequence)
+    Cmax = get_Cmax(machines)
+
+    if print_out:
+        print(operation_data)
+        print('Job 0 operations', jobs[0].operations[0].job_number)
+        print('Job 1 operations', jobs[1].operations[1].job_number)
+        print('Job 2 operations',jobs[2].operations)
+        print('initial population: \n', initial_population)
+        print('ranked list:\n', ranked_population)
+        print('job operation sequence list:\n', operation_index_pop)
+        print('job operation sequence:\n', operation_schedule)
+        print(f'machine sequence: {machine_sequence}')
+        print(f'ptime sequence: {ptime_sequence}')
         
-    print(f'Cmax is {Cmax}')
+        for operation in operation_schedule:
+            print(f'\n operation of job number: {operation.job_number},operation number: {operation.operation_number}, operation machine number :{ operation.machine}, processing time:{operation.Pj}\n Start time: {operation.start_time}, Pj: {operation.Pj }, Cj: {operation.Cj}')
+            
+        for machine in machines:
+            print(f'machine number: {machine.machine_id}, machine finish: {machine.finish_operation_time}')
+            
+        print(f'Cmax is {Cmax}')
+        
+def main2():
+    initial_population = generate_population(N)
+    
+    population = []
+    for encoded_list in initial_population:
+        print(f'generated list: {encoded_list}')
+        chromosome = process_chromosome(encoded_list)
+        population.append(chromosome)
+        
+    for chromosome in population:
+        print('encoded list in chromosome:', chromosome.encoded_list)
+            
+        
+        if print_out:
+            print('random generated numbers:',chromosome.encoded_list)
+            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation objects: {chromosome.operation_schedule}\n')
+            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+        
+    
+    
+        
+if __name__ == '__main__':
+    main2()
