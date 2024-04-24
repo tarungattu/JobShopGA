@@ -256,7 +256,43 @@ def process_chromosome(chromosome):
     
     return chromosome
 
-
+def PlotGanttChar (chromosome):
+        # ------------------------------
+        # Figure and set of subplots
+        
+    Cmax = chromosome.Cmax
+    fig, ax = plt.subplots()
+    fig.set_figheight(8)
+    fig.set_figwidth(10)
+    # ylim and xlim of the axes
+    ax.set_ylabel('Machine', fontweight ='bold', loc='top', color='magenta', fontsize=16)
+    ax.set_ylim(-0.5, m-0.5)
+    ax.set_yticks(range(m), minor=False)
+    ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
+        
+    ax.set_xlabel('Time', fontweight ='bold', loc='right', color='red', fontsize=16)
+    ax.set_xlim(0, Cmax+2)
+        
+    ax.tick_params(axis='x', labelcolor='red', labelsize=16)
+        
+    ax.grid(True)
+        
+    tmpTitle = 'Job Shop Scheduling (m={:02d}; n={:03d}; Utilization={:04d})'.format(m, n, Cmax)
+    plt.title(tmpTitle, size=24, color='blue')
+        
+    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta','blue','green','silver']
+        
+        
+    for i in range (m):
+        joblen = len(chromosome.machine_list[i].operationlist)
+        for k in range(joblen):
+            j = chromosome.machine_list[i].operationlist[k]
+            ST = j.start_time
+            cIndx = 0
+            # cIndx = k%(n*N)
+            if j.Pj != 0:
+                ax.broken_barh([(ST, j.Pj)], (-0.3+i, 0.6), facecolor=random.choice(colors), linewidth=1, edgecolor='black')
+                ax.text((ST + (j.job_number/2-0.3)), (i+0.03), '{}'.format(j.job_number), fontsize=18)
     
 
 
@@ -341,7 +377,8 @@ def main2():
         print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
         print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
         
-        
+    PlotGanttChar(chromosome_test)
+    plt.show()
     
         
 if __name__ == '__main__':
