@@ -10,7 +10,7 @@ from chromosome import Chromosome
 
 m = 4
 n = 3
-N = 2
+N = 1
 
 
 machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -58,6 +58,7 @@ def create_operation_data(machine_data, ptime_data, m):
 def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
         job.operations = operation
+    
         
         
 def generate_population(N):
@@ -76,7 +77,7 @@ def integer_list(population):
         sorted_list = sorted(population[i])
             
         # Create a dictionary to store the ranks of each float number
-        ranks = {value: index for index, value in enumerate(sorted_list)}
+        ranks = {value: index + 1 for index, value in enumerate(sorted_list)}
             
         # Convert each float number to its corresponding rank
         rank_list = [ranks[value] for value in population[i]]
@@ -166,6 +167,7 @@ def assign_data_to_operations(jobs, operation_data):
             operation.machine = sublist[i][0]
             operation.Pj = sublist[i][1]
             
+            
 def get_machine_sequence(operation_schedule):
     machine_sequence = []
     for operation in operation_schedule:
@@ -202,6 +204,11 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
                     machines[operation.machine].finish_operation_time = operation.Cj
                 # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
+
+def assign_machine_operationlist(machines, operation_schedule):
+    for operation in operation_schedule:
+        machines[operation.machine].operationlist.append(operation)
+
 def get_Cmax(machines):
     runtimes = []
     for machine in machines:
@@ -229,6 +236,7 @@ def process_chromosome(chromosome):
     ptime_sequence = get_processing_times(operation_schedule)
     
     calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_sequence)
+    assign_machine_operationlist(machines, operation_schedule)
     Cmax = get_Cmax(machines)
     
     chromosome = Chromosome(chromosome)
@@ -237,6 +245,7 @@ def process_chromosome(chromosome):
     chromosome.operation_index_list = operation_index_list
     chromosome.operation_schedule = operation_schedule
     chromosome.machine_sequence = machine_sequence
+    chromosome.machine_list = machines
     chromosome.ptime_sequence = ptime_sequence
     chromosome.Cmax = Cmax
     
@@ -311,15 +320,17 @@ def main2():
         population.append(chromosome)
         
     for chromosome in population:
-        print('encoded list in chromosome:', chromosome.encoded_list)
+        for machine in chromosome.machine_list:
+            for operation in machine.operationlist:
+                print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
             
         
-        if print_out:
-            print('random generated numbers:',chromosome.encoded_list)
-            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation objects: {chromosome.operation_schedule}\n')
-            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+    if print_out:
+        print('random generated numbers:',chromosome.encoded_list)
+        print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
+        print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
         
-    
+        
     
         
 if __name__ == '__main__':

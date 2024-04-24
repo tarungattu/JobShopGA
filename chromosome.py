@@ -5,6 +5,7 @@ class Chromosome:
         self.operation_index_list = []
         self.operation_schedule = []
         self.machine_sequence = []
+        self.machine_list = []
         self.ptime_sequence = []
         self.Cmax = 9999
         self.penalty = 0
