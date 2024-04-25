@@ -10,7 +10,8 @@ from chromosome import Chromosome
 
 m = 4
 n = 3
-N = 1
+N = 2
+pc = 0.5
 
 
 machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -146,7 +147,7 @@ def induv_schedule_operations(chromosome, jobs):
     operation_list = []
     explored = []
     
-    for i in range(len(chromosome) - 1):
+    for i in range(len(chromosome)):
         explored.append(chromosome[i])
         numcount = explored.count(chromosome[i])
         if numcount <= m:
@@ -291,8 +292,67 @@ def PlotGanttChar (chromosome):
             cIndx = 0
             # cIndx = k%(n*N)
             if j.Pj != 0:
-                ax.broken_barh([(ST, j.Pj)], (-0.3+i, 0.6), facecolor=random.choice(colors), linewidth=1, edgecolor='black')
+                ax.broken_barh([(ST, j.Pj)], (-0.3+i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
                 ax.text((ST + (j.job_number/2-0.3)), (i+0.03), '{}'.format(j.job_number), fontsize=18)
+                
+def tournament(population):
+    indices2 = [x for x in range(N)]
+    
+    winners = []
+    while len(indices2) != 0:
+        i1 = random.choice(indices2)
+        i2 = random.choice(indices2)
+        while i1 == i2:
+            i2 = random.choice(indices2)
+            
+        if population[i1].fitness < population[i2].fitness:
+            winners.append(population[i1])
+        else:
+            winners.append(population[i2])
+            
+        indices2.remove(i1)
+        indices2.remove(i2)
+    
+    indices2 = [x for x in range(N)]
+    
+    winners = []
+    while len(indices2) != 0:
+        i1 = random.choice(indices2)
+        i2 = random.choice(indices2)
+        while i1 == i2:
+            i2 = random.choice(indices2)
+            
+        if population[i1].fitness < population[i2].fitness:
+            winners.append(population[i1])
+        else:
+            winners.append(population[i2])
+            
+        indices2.remove(i1)
+        indices2.remove(i2)
+        
+    return winners
+    
+    
+                
+def single_point_crossover(chrom1, chrom2):
+    
+    parent1 = chrom1.encoded_list
+    parent2 = chrom2.encoded_list
+    
+    # r = random.uniform(0,1)
+    r = 0.4
+    
+    p = 5
+    if r > pc:
+        return chrom1 , chrom2
+    else:
+        offspring1 = parent1[0:p] + parent2[p:]
+        offspring2 = parent2[0:p] + parent1[p:]
+        chrom_out1 = process_chromosome(offspring1)
+        chrom_out2 = process_chromosome(offspring2)
+    
+    return chrom_out1, chrom_out2
+    
     
 
 
@@ -360,25 +420,74 @@ def main2():
     #     chromosome = process_chromosome(encoded_list)
     #     population.append(chromosome)
     
-    encoded_list = [7.45,	10.69,	9.73,	1.31,	1.67,	1.58,	7.29,	2.77,	8.91,	7.35,	3.46,	7.47]
-    chromosome_test = process_chromosome(encoded_list)
-    population.append(chromosome_test)
+    encoded_list1 = [7.45,	10.69,	9.73,	1.31,	1.67,	1.58,	7.29,	2.77,	8.91,	7.35,	3.46,	7.47]
+    chromosome_test1 = process_chromosome(encoded_list1)
+    
+    population.append(chromosome_test1)
+    
+    encoded_list2 = [4.74, 8.05, 10.48, 7.19, 6.05, 0.56, 0.04, 3.82, 1.37, 3.95, 1.46, 5.38]
+    chromosome_test2 = process_chromosome(encoded_list2)
+    
+    population.append(chromosome_test2)
     
     
     
-    for chromosome in population:
-        for machine in chromosome.machine_list:
-            for operation in machine.operationlist:
-                print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
+    
+    # for chromosome in population:
+    #     for machine in chromosome.machine_list:
+    #         for operation in machine.operationlist:
+    #             print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
             
         
-    if print_out:
-        print('random generated numbers:',chromosome.encoded_list)
-        print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
-        print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
         
-    PlotGanttChar(chromosome_test)
-    plt.show()
+    # PlotGanttChar(chromosome_test)
+    # plt.show()
+    
+    # winners_list = tournament(population)
+    
+    # print('parents are')
+    # for chromosome in winners_list:
+    #     print(chromosome.encoded_list)
+    
+    # serial crossover section
+    
+    # indices = [x for x in range(N)]
+    # offspring_list = winners_list
+    # while len(indices) != 0:
+    #     i1 = random.choice(indices)
+    #     i2 = random.choice(indices)
+    #     while i1 == i2:
+    #         i2 = random.choice(indices)
+        
+    #     offspring1, offspring2 = single_point_crossover(winners_list[i1], winners_list[i2])
+    #     offspring_list[i1] = offspring1
+    #     offspring_list[i2] = offspring2
+        
+    #     indices.remove(i1)
+    #     indices.remove(i2)
+    
+    offspring_list = []
+    
+    offspring1, offspring2 = single_point_crossover(chromosome_test1, chromosome_test2)
+    offspring_list.extend([offspring1, offspring2])
+        
+    if print_out:
+        for chromosome in population:
+            print('random generated numbers:',chromosome.encoded_list)
+            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
+            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+            for machine in chromosome.machine_list:
+                print(f'machine no: {machine.machine_id}, Cj :{machine.finish_operation_time}')
+        for chromosome in offspring_list:
+            print('random generated numbers:',chromosome.encoded_list)
+            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
+            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+            for machine in chromosome.machine_list:
+                print(f'machine no: {machine.machine_id}, Cj :{machine.finish_operation_time}')
+                
+    # print('offsprings are:')
+    # for chromosome in offspring_list:
+    #     print(chromosome.encoded_list)
     
         
 if __name__ == '__main__':

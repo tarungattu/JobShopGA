@@ -10,7 +10,9 @@ from chromosome import Chromosome
 
 m = 4
 n = 3
-N = 1
+N = 8
+pc = 0.5
+pm = 0.1
 
 
 machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -24,17 +26,6 @@ else:
     # Default value if no command-line argument is provided
     print_out = False
     
-if len(sys.argv) > 1:
-    test_old_prog = sys.argv[1].lower() == 'old'
-else:
-    # Default value if no command-line argument is provided
-    test_old_prog = False
-
-if len(sys.argv) > 1:
-    processing = sys.argv[1].lower() == 'proc'
-else:
-    # Default value if no command-line argument is provided
-    processing = False
 
 def create_operation_data(machine_data, ptime_data, m):
     matrix = []
@@ -146,7 +137,7 @@ def induv_schedule_operations(chromosome, jobs):
     operation_list = []
     explored = []
     
-    for i in range(len(chromosome) - 1):
+    for i in range(len(chromosome)):
         explored.append(chromosome[i])
         numcount = explored.count(chromosome[i])
         if numcount <= m:
@@ -218,7 +209,9 @@ def get_Cmax(machines):
 
 def process_chromosome(chromosome):
     operation_data = create_operation_data(machine_data,ptime_data, m)
-    print(operation_data)
+    
+    # print(operation_data)
+    
     jobs = [Job(number) for number in range(n)]
     machines = [Machine(number) for number in range(m)]
     assign_operations(jobs, operation_data)
@@ -249,6 +242,7 @@ def process_chromosome(chromosome):
     chromosome.ptime_sequence = ptime_sequence
     chromosome.Cmax = Cmax
     
+    chromosome.set_fitness()
     return chromosome
 
 
@@ -287,10 +281,78 @@ def PlotGanttChar (chromosome):
             cIndx = 0
             # cIndx = k%(n*N)
             if j.Pj != 0:
-                ax.broken_barh([(ST, j.Pj)], (-0.3+i, 0.6), facecolor=random.choice(colors), linewidth=1, edgecolor='black')
+                ax.broken_barh([(ST, j.Pj)], (-0.3+i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
                 ax.text((ST + (j.job_number/2-0.3)), (i+0.03), '{}'.format(j.job_number), fontsize=18)
     
+def tournament(population):
+    indices2 = [x for x in range(N)]
+    
+    winners = []
+    while len(indices2) != 0:
+        i1 = random.choice(indices2)
+        i2 = random.choice(indices2)
+        while i1 == i2:
+            i2 = random.choice(indices2)
+            
+        if population[i1].fitness < population[i2].fitness:
+            winners.append(population[i1])
+        else:
+            winners.append(population[i2])
+            
+        indices2.remove(i1)
+        indices2.remove(i2)
+    
+    indices2 = [x for x in range(N)]
+    
+    while len(indices2) != 0:
+        i1 = random.choice(indices2)
+        i2 = random.choice(indices2)
+        while i1 == i2:
+            i2 = random.choice(indices2)
+            
+        if population[i1].fitness < population[i2].fitness:
+            winners.append(population[i1])
+        else:
+            winners.append(population[i2])
+            
+        indices2.remove(i1)
+        indices2.remove(i2)
+        
+    return winners
 
+def single_point_crossover(chrom1, chrom2):
+    
+    parent1 = chrom1.encoded_list
+    parent2 = chrom2.encoded_list
+    
+    r = random.uniform(0,1)
+    # r = 0.4
+    
+    p = 5
+    if r > pc:
+        return chrom1 , chrom2
+    else:
+        offspring1 = parent1[0:p] + parent2[p:]
+        offspring2 = parent2[0:p] + parent1[p:]
+        chrom_out1 = process_chromosome(offspring1)
+        chrom_out2 = process_chromosome(offspring2)
+    
+    return chrom_out1, chrom_out2
+
+def single_bit_mutation(chromosome):
+    
+    r = random.uniform(0,1)
+    code = chromosome.encoded_list
+    
+    if r > pm:
+        return chromosome
+    else:
+        index = random.randint(0, len(code) - 1)
+        code[index] = round(random.uniform(0,m*n), 2)
+        mutated_chromosome = process_chromosome(code)
+    
+    return mutated_chromosome
+        
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -356,21 +418,85 @@ def main2():
         chromosome = process_chromosome(encoded_list)
         population.append(chromosome)
         
-    for chromosome in population:
-        for machine in chromosome.machine_list:
-            for operation in machine.operationlist:
-                print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
             
+                    
+        # print('initial fitness')
+        # for chrom in population:
+        #     print(chrom.fitness,end = " ")
+                    
+        # print('winners fitness')
+        # for chrom in winners_list:
+        #     print(chrom.fitness, end = " ")
+            
+    # for chromosome in population:
+    #     PlotGanttChar(chromosome)
+        
+    # plt.show()
+    
+    winners_list = tournament(population)
+    
+    print('parents are')
+    for chromosome in winners_list:
+        print(chromosome.encoded_list)
+    
+    # serial crossover section
+    
+    indices = [x for x in range(N)]
+    offspring_list = winners_list
+    while len(indices) != 0:
+        i1 = random.choice(indices)
+        i2 = random.choice(indices)
+        while i1 == i2:
+            i2 = random.choice(indices)
+        
+        offspring1, offspring2 = single_point_crossover(winners_list[i1], winners_list[i2])
+        offspring_list[i1] = offspring1
+        offspring_list[i2] = offspring2
+        
+        indices.remove(i1)
+        indices.remove(i2)
+        
+    print('offsprings are:')
+    for chromosome in offspring_list:
+        print(chromosome.encoded_list)
+    
+    # serial mutation depending of probability
+    mutated_list = []
+    for chromosome in offspring_list:
+        mutated_chromosome = single_bit_mutation(chromosome)
+        mutated_list.append(mutated_chromosome)
+        
+    print('mutated gen are')
+    for chromosome in mutated_list:
+        print(chromosome.encoded_list)
+
         
     if print_out:
-        print('random generated numbers:',chromosome.encoded_list)
-        print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
-        print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
         
+        for chromosome in population:
+            # for machine in chromosome.machine_list:
+            #     for operation in machine.operationlist:
+            #         print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
+            print('random generated numbers:',chromosome.encoded_list)
+            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
+            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+        
+        for chromosome in mutated_list:
+            # for machine in chromosome.machine_list:
+            #     for operation in machine.operationlist:
+            #         print(f'machine no: {machine.machine_id}, operation assigned mach: {operation.machine}, job no: {operation.job_number}, operation no: {operation.operation_number}')
+            print('random generated numbers:',chromosome.encoded_list)
+            print(f'ranked list : {chromosome.ranked_list}\n operation_index :{chromosome.operation_index_list},\n operation object{chromosome.operation_schedule}\n')
+            print(f'machine sequence: {chromosome.machine_sequence}\n ptime sequence: {chromosome.ptime_sequence}\n Cmax: {chromosome.Cmax}')
+            
+    print('initial population')
     for chromosome in population:
-        PlotGanttChar(chromosome)
-        
-    plt.show()
+        print(chromosome.Cmax, end = " ")
+    
+    print('\n')
+    print('mutated and crossover complete')        
+    for chromosome in mutated_list:
+        print(chromosome.Cmax, end = " ")
         
 if __name__ == '__main__':
     main2()

@@ -9,4 +9,7 @@ class Chromosome:
         self.ptime_sequence = []
         self.Cmax = 9999
         self.penalty = 0
+        self.fitness = 9999
+        
+    def set_fitness(self):
         self.fitness = self.Cmax + self.penalty
