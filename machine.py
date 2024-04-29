@@ -1,5 +1,5 @@
 #number of machines
-m = 4
+m = 15
 
 class Machine:
     def __init__(self, machine_id):

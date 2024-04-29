@@ -8,17 +8,48 @@ from machine import Machine
 from operation import Operation
 from chromosome import Chromosome
 
-m = 4
-n = 3
-N = 8
-pc = 0.5
-pm = 0.3
+m = 15
+n = 15
+N = 10
+pc = 0.8
+pm = 0.1
 
-T = 50
+T = 100
+
+# Pinedo book first example
+# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+
+#Pinedo Book second example
+# machine_data = [0,1,2,3, 0,1,3,2, 2,0,1,3]
+# ptime_data = [9,8,4,0, 5,6,3,0, 10,4,9,0]
 
 
-machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+
+# machine_data = [0,1,2,3,4, 1,0,3,2,4, 0,1,3,2,4, 1,3,4,2,3]
+# ptime_data = [10,8,4,0,2, 4,3,5,6,3, 4,7,3,0,0, 0,2,4,5,3]
+
+# E. Taillard Benchmark first instance 15*15
+
+machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
+
+ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
+
+# second instance 15*15
+# machine_data = [9, 14, 4, 13, 10, 3, 7, 8, 0, 5, 1, 2, 12, 6, 11, 10, 8, 11, 14, 3, 13, 9, 7, 4, 2, 6, 1, 5, 12, 0, 7, 0, 6, 5, 14, 13, 2, 11, 4, 12, 1, 9, 3, 10, 8, 9, 11, 14, 0, 1, 8, 5, 10, 12, 4, 13, 3, 6, 7, 2, 11, 4, 13, 3, 8, 1, 10, 12, 2, 14, 6, 7, 0, 9, 5, 5, 2, 1, 10, 0, 4, 8, 14, 6, 3, 9, 7, 11, 12, 13, 5, 10, 13, 0, 9, 8, 1, 11, 14, 7, 12, 2, 6, 4, 3, 12, 0, 9, 3, 13, 6, 5, 7, 2, 14, 11, 8, 10, 1, 4, 11, 10, 5, 13, 1, 9, 8, 7, 3, 6, 0, 2, 14, 12, 4, 2, 14, 3, 10, 6, 1, 0, 13, 11, 4, 5, 8, 7, 12, 9, 11, 14, 13, 5, 4, 9, 1, 6, 12, 0, 2, 8, 10, 3, 7, 12, 3, 10, 8, 4, 7, 13, 11, 14, 1, 2, 0, 5, 6, 9, 8, 13, 5, 0, 11, 9, 4, 12, 1, 10, 6, 2, 7, 14, 3, 2, 5, 4, 3, 9, 1, 11, 13, 7, 6, 10, 14, 0, 8, 12, 1, 10, 4, 2, 0, 7, 6, 9, 11, 12, 5, 14, 3, 13, 8]
+
+# ptime_data = [86, 60, 10, 59, 65, 94, 71, 25, 98, 49, 43, 8, 90, 21, 73, 68, 28, 38, 36, 93, 35, 37, 28, 62, 86, 65, 11, 20, 82, 23, 33, 67, 96, 91, 83, 81, 60, 88, 20, 62, 22, 79, 38, 40, 82, 13, 14, 73, 88, 24, 16, 78, 70, 53, 68, 73, 90, 58, 7, 4, 93, 52, 63, 13, 19, 41, 71, 59, 19, 60, 85, 99, 73, 95, 19, 62, 60, 93, 16, 10, 72, 88, 69, 58, 41, 46, 63, 76, 83, 62, 50, 68, 90, 34, 44, 5, 8, 25, 70, 53, 78, 92, 62, 85, 70, 60, 64, 92, 44, 63, 91, 21, 1, 96, 19, 59, 12, 41, 11, 94, 93, 46, 51, 37, 91, 90, 63, 40, 68, 13, 16, 83, 49, 24, 23, 5, 35, 21, 14, 66, 3, 6, 98, 63, 64, 76, 94, 17, 62, 37, 35, 42, 62, 68, 73, 27, 52, 39, 41, 25, 9, 34, 50, 41, 98, 23, 32, 35, 10, 29, 68, 20, 8, 58, 62, 39, 32, 8, 33, 91, 28, 31, 3, 28, 66, 59, 24, 45, 81, 8, 44, 42, 2, 23, 53, 11, 93, 27, 59, 62, 23, 23, 7, 77, 64, 60, 97, 36, 53, 72, 36, 98, 38, 24, 84, 47, 72, 1, 91, 85, 68, 42, 20, 30, 30]
+
+
+# E. Taillard Benchmark first instance 20*15
+
+# ptime_data = [25, 75, 75, 76, 38, 62, 38, 59, 14, 13, 46, 31, 57, 92, 3, 67, 5, 11, 11, 40, 34, 77, 42, 35, 96, 22, 55, 21, 29, 16, 22, 98, 8, 35, 59, 31, 13, 46, 52, 22, 18, 19, 64, 29, 70, 99, 42, 2, 35, 11, 92, 88, 97, 21, 56, 17, 43, 27, 19, 23, 50, 5, 59, 71, 47, 39, 82, 35, 12, 2, 39, 42, 52, 65, 35, 48, 57, 5, 2, 60, 64, 86, 3, 51, 26, 34, 39, 45, 63, 54, 40, 43, 50, 71, 46, 99, 67, 34, 6, 95, 67, 54, 29, 30, 60, 59, 3, 85, 6, 46, 49, 5, 82, 18, 71, 48, 79, 62, 65, 76, 65, 55, 81, 15, 32, 52, 97, 69, 82, 89, 69, 87, 22, 71, 63, 70, 74, 52, 94, 14, 81, 24, 14, 32, 39, 67, 59, 18, 77, 50, 18, 6, 96, 53, 35, 99, 39, 18, 14, 90, 64, 81, 89, 48, 80, 44, 75, 12, 13, 74, 59, 71, 75, 30, 93, 26, 30, 84, 91, 93, 39, 56, 13, 29, 55, 69, 26, 7, 55, 48, 22, 46, 50, 96, 17, 57, 14, 8, 13, 95, 53, 78, 24, 92, 90, 68, 87, 43, 75, 94, 93, 92, 18, 28, 27, 40, 56, 83, 51, 15, 97, 48, 53, 78, 39, 47, 34, 42, 28, 11, 11, 30, 14, 10, 4, 20, 92, 19, 59, 28, 69, 82, 64, 40, 27, 82, 27, 43, 56, 17, 18, 20, 98, 43, 68, 84, 26, 87, 61, 95, 23, 88, 89, 49, 84, 12, 51, 3, 44, 20, 43, 54, 18, 72, 70, 28, 20, 22, 59, 36, 85, 13, 73, 29, 45, 7, 97, 4, 22, 74, 45, 62, 95, 66, 14, 40, 23, 79, 34, 8]
+
+# machine_data = [3, 11, 14, 1, 10, 2, 4, 7, 0, 12, 5, 9, 6, 13, 8, 5, 0, 3, 8, 4, 1, 12, 14, 6, 7, 10, 2, 9, 13, 11, 2, 3, 14, 0, 9, 12, 5, 4, 7, 10, 8, 11, 13, 1, 6, 8, 10, 1, 13, 3, 4, 14, 9, 2, 5, 11, 7, 0, 6, 12, 14, 8, 1, 2, 10, 9, 12, 4, 6, 5, 0, 13, 3, 11, 7, 3, 10, 1, 5, 6, 0, 8, 7, 11, 13, 2, 14, 12, 9, 4, 2, 10, 1, 12, 8, 0, 7, 6, 14, 13, 4, 3, 5, 9, 11, 1, 0, 2, 4, 7, 13, 11, 3, 12, 5, 6, 14, 9, 8, 10, 4, 5, 9, 10, 7, 6, 2, 1, 12, 3, 13, 0, 8, 14, 11, 1, 4, 3, 10, 14, 0, 6, 13, 11, 8, 5, 12, 7, 9, 2, 3, 10, 1, 0, 9, 8, 14, 6, 4, 7, 2, 12, 5, 11, 13, 2, 7, 6, 8, 3, 5, 14, 4, 1, 0, 9, 10, 13, 11, 12, 0, 7, 14, 8, 12, 10, 9, 3, 6, 1, 4, 2, 11, 13, 5, 12, 3, 9, 4, 1, 0, 10, 6, 5, 2, 14, 13, 7, 8, 11, 3, 14, 6, 5, 13, 9, 1, 0, 12, 7, 2, 4, 10, 8, 11, 5, 14, 6, 12, 8, 2, 4, 9, 11, 13, 3, 1, 7, 0, 10, 3, 7, 10, 14, 0, 8, 1, 11, 5, 13, 4, 12, 6, 9, 2, 10, 8, 2, 11, 13, 6, 14, 3, 9, 7, 4, 5, 12, 0, 1, 3, 2, 12, 13, 1, 6, 14, 5, 4, 8, 9, 11, 0, 10, 7, 11, 14, 5, 6, 10, 9, 13, 1, 4, 8, 0, 3, 12, 2, 7]
+
+
+
+
 
 
 # print out necessary
@@ -206,7 +237,7 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
             # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
             
         else:
-            if jobs[operation.job_number].operations[operation.operation_number - 1].Cj < machines[operation.machine].  finish_operation_time:
+            if jobs[operation.job_number].operations[operation.operation_number - 1].Cj < machines[operation.machine].finish_operation_time:
                 operation.start_time = machines[operation.machine].finish_operation_time
                 operation.Cj = operation.start_time + operation.Pj
                 machines[operation.machine].finish_operation_time = operation.Cj
@@ -295,7 +326,7 @@ def PlotGanttChar (chromosome):
     tmpTitle = 'Job Shop Scheduling (m={:02d}; n={:03d}; Utilization={:04d})'.format(m, n, Cmax)
     plt.title(tmpTitle, size=20, color='blue')
         
-    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta','blue','green','silver']
+    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta','blue','green','silver','purple', 'cyan']
         
         
     for i in range (m):
@@ -353,7 +384,7 @@ def single_point_crossover(chrom1, chrom2):
     r = random.uniform(0,1)
     # r = 0.4
     
-    p = 5
+    p = random.randint(0,len(parent1))
     if r > pc:
         return chrom1 , chrom2
     else:
@@ -382,15 +413,66 @@ def single_bit_mutation(chromosome):
     return mutated_chromosome
 
 def next_gen_selection(parents, offsprings):
-    total_population = []
-    total_population.extend(parents)
-    total_population.extend(offsprings)
+    # total_population = []
+    # total_population.extend(parents)
+    # total_population.extend(offsprings)
     
-    sortedGen = []
-    sortedGen = sorted(total_population, key = lambda  x : x.fitness )
-    return sortedGen[:N]
+    # sortedGen = []
+    # return sortedGen[:N]
     
+    # Use 20% parents 80% offsprings
+    sorted_parent = []
+    number = len(parents)  # Your number
+    twenty_percent = int(number * 0.2)
+    sorted_parents = sorted(parents, key = lambda  x : x.fitness )
+    
+    sorted_offsprings = []
+    number = len(offsprings)  # Your number
+    eighty_percent = number - twenty_percent
+    sorted_offsprings = sorted(sorted_offsprings, key = lambda  x : x.fitness )
+    
+    total_population = sorted_parents[0:twenty_percent] + sorted_offsprings[twenty_percent:]
+    sorted_total_population = sorted(total_population, key = lambda  x : x.fitness )
+    return sorted_total_population
+    
+def swapping(chromosome):
+    r = random.uniform(0,1)
+    if r > 0.5:
+        return chromosome
+    
+    code = chromosome.encoded_list
+    indexes = [num for num in range(len(code))]
+    
+    p = random.choice(indexes)
+    q = random.choice(indexes)
+    while p == q:
+        q = random.choice(indexes)
         
+    code[p], code[q] = code[q], code[p]
+    
+    swapped_chromosome = process_chromosome(code)
+    return swapped_chromosome
+    
+def inversion(chromosome):
+    
+    r = random.uniform(0,1)
+    if r > 0.5:
+        return chromosome
+    
+    code = chromosome.encoded_list
+    indexes = [num for num in range(len(code))]
+    p = random.choice(indexes)
+    q = random.choice(indexes)
+    while p == q:
+        q = random.choice(indexes)
+        
+    
+    p, q = min(p, q), max(p, q)
+    code[p:q+1] = reversed(code[p:q+1])
+    
+    inverted_chromosome = process_chromosome(code)
+    
+    return inverted_chromosome
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -589,15 +671,32 @@ def main3():
             mutated_chromosome = single_bit_mutation(chromosome)
             mutated_list.append(mutated_chromosome)
             
+            
+        # perform swapping operation
+        swap_list = []
+        for chromosome in mutated_list:
+            swap_chromosome = swapping(chromosome)
+            swap_list.append(swap_chromosome)
+            
+            
+        # perform inversion operation on chromosomes
+        invert_list = []
+        for chromosome in swap_list:
+            inverted_chromosome = inversion(chromosome)
+            invert_list.append(inverted_chromosome)
+            
         # selection of survivors for next generation
         
-        survivors = next_gen_selection(winners_list, mutated_list)
+        survivors = next_gen_selection(winners_list, invert_list)
         
         if survivors[0].fitness < best_chromosome.fitness:
             best_chromosome = survivors[0]
             
         ypoints.append(best_chromosome.fitness)
         winners_list = survivors
+        
+        if (t + 1) % 25 == 0:
+            print(f'At generation {t + 1}, best fitness :{best_chromosome.fitness}')
         
         
         t += 1
@@ -606,7 +705,7 @@ def main3():
     xpoints = [x for x in range(1, t+ 1)]
     plt.plot(xpoints, ypoints,  color= 'b')
     
-    print(f'best Cmax = {ypoints[N-1]}')
+    # print(f'best Cmax = {ypoints[N-1]}')
     print(f'best Cmax = {best_chromosome.fitness}')
     
     print('random generated numbers:',best_chromosome.encoded_list)

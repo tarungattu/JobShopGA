@@ -1,5 +1,5 @@
 # number of jobs
-n = 3
+n = 15
 
 class Job:
     def __init__(self, job_number):

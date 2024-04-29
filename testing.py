@@ -353,8 +353,32 @@ def single_point_crossover(chrom1, chrom2):
     
     return chrom_out1, chrom_out2
     
+def swapping(chromosome):
+    code = chromosome.encoded_list
+    indexes = [num for num in range(len(code))]
     
+    p = random.choice(indexes)
+    q = random.choice(indexes)
+    while p == q:
+        q = random.choice(indexes)
+        
+    print(code)
+        
+    code[p], code[q] = code[q], code[p]
+    print(code)
 
+def inversion(chromosome):
+    code = chromosome.encoded_list
+    indexes = [num for num in range(len(code))]
+    p = random.choice(indexes)
+    q = random.choice(indexes)
+    while p == q:
+        q = random.choice(indexes)
+        
+    print(code)
+    p, q = min(p, q), max(p, q)
+    code[p:q+1] = reversed(code[p:q+1])
+    print(code)
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -470,6 +494,11 @@ def main2():
     
     offspring1, offspring2 = single_point_crossover(chromosome_test1, chromosome_test2)
     offspring_list.extend([offspring1, offspring2])
+    
+    # swapping(chromosome_test1)
+    
+    inversion(chromosome_test1)
+    
         
     if print_out:
         for chromosome in population:
