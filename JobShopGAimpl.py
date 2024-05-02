@@ -7,14 +7,18 @@ from job import Job
 from machine import Machine
 from operation import Operation
 from chromosome import Chromosome
+import time
+import os
 
-m = 15
-n = 15
-N = 10
+m = 6
+n = 6
+N = 250
 pc = 0.8
-pm = 0.1
+pm = 0.01
+pswap = 0.01
+pinv = 0.01
 
-T = 100
+T = 200
 
 # Pinedo book first example
 # machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -31,9 +35,11 @@ T = 100
 
 # E. Taillard Benchmark first instance 15*15
 
-machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
+# seed_value = 398197754
+# random.seed(seed_value)
+# machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
 
-ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
+# ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
 
 # second instance 15*15
 # machine_data = [9, 14, 4, 13, 10, 3, 7, 8, 0, 5, 1, 2, 12, 6, 11, 10, 8, 11, 14, 3, 13, 9, 7, 4, 2, 6, 1, 5, 12, 0, 7, 0, 6, 5, 14, 13, 2, 11, 4, 12, 1, 9, 3, 10, 8, 9, 11, 14, 0, 1, 8, 5, 10, 12, 4, 13, 3, 6, 7, 2, 11, 4, 13, 3, 8, 1, 10, 12, 2, 14, 6, 7, 0, 9, 5, 5, 2, 1, 10, 0, 4, 8, 14, 6, 3, 9, 7, 11, 12, 13, 5, 10, 13, 0, 9, 8, 1, 11, 14, 7, 12, 2, 6, 4, 3, 12, 0, 9, 3, 13, 6, 5, 7, 2, 14, 11, 8, 10, 1, 4, 11, 10, 5, 13, 1, 9, 8, 7, 3, 6, 0, 2, 14, 12, 4, 2, 14, 3, 10, 6, 1, 0, 13, 11, 4, 5, 8, 7, 12, 9, 11, 14, 13, 5, 4, 9, 1, 6, 12, 0, 2, 8, 10, 3, 7, 12, 3, 10, 8, 4, 7, 13, 11, 14, 1, 2, 0, 5, 6, 9, 8, 13, 5, 0, 11, 9, 4, 12, 1, 10, 6, 2, 7, 14, 3, 2, 5, 4, 3, 9, 1, 11, 13, 7, 6, 10, 14, 0, 8, 12, 1, 10, 4, 2, 0, 7, 6, 9, 11, 12, 5, 14, 3, 13, 8]
@@ -47,9 +53,52 @@ ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31
 
 # machine_data = [3, 11, 14, 1, 10, 2, 4, 7, 0, 12, 5, 9, 6, 13, 8, 5, 0, 3, 8, 4, 1, 12, 14, 6, 7, 10, 2, 9, 13, 11, 2, 3, 14, 0, 9, 12, 5, 4, 7, 10, 8, 11, 13, 1, 6, 8, 10, 1, 13, 3, 4, 14, 9, 2, 5, 11, 7, 0, 6, 12, 14, 8, 1, 2, 10, 9, 12, 4, 6, 5, 0, 13, 3, 11, 7, 3, 10, 1, 5, 6, 0, 8, 7, 11, 13, 2, 14, 12, 9, 4, 2, 10, 1, 12, 8, 0, 7, 6, 14, 13, 4, 3, 5, 9, 11, 1, 0, 2, 4, 7, 13, 11, 3, 12, 5, 6, 14, 9, 8, 10, 4, 5, 9, 10, 7, 6, 2, 1, 12, 3, 13, 0, 8, 14, 11, 1, 4, 3, 10, 14, 0, 6, 13, 11, 8, 5, 12, 7, 9, 2, 3, 10, 1, 0, 9, 8, 14, 6, 4, 7, 2, 12, 5, 11, 13, 2, 7, 6, 8, 3, 5, 14, 4, 1, 0, 9, 10, 13, 11, 12, 0, 7, 14, 8, 12, 10, 9, 3, 6, 1, 4, 2, 11, 13, 5, 12, 3, 9, 4, 1, 0, 10, 6, 5, 2, 14, 13, 7, 8, 11, 3, 14, 6, 5, 13, 9, 1, 0, 12, 7, 2, 4, 10, 8, 11, 5, 14, 6, 12, 8, 2, 4, 9, 11, 13, 3, 1, 7, 0, 10, 3, 7, 10, 14, 0, 8, 1, 11, 5, 13, 4, 12, 6, 9, 2, 10, 8, 2, 11, 13, 6, 14, 3, 9, 7, 4, 5, 12, 0, 1, 3, 2, 12, 13, 1, 6, 14, 5, 4, 8, 9, 11, 0, 10, 7, 11, 14, 5, 6, 10, 9, 13, 1, 4, 8, 0, 3, 12, 2, 7]
 
+# FISHER THOMPSON ft06 6*6 
+ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
+machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
+
+
+# LAWRENCE la01 10*5
+# machine_data = [1, 0, 4, 3, 2,  0, 3, 4, 2, 1,  3, 4, 1, 2, 0,  1, 0, 4, 2, 3,  0, 3, 2, 1, 4,  1, 2, 4, 0, 3,  3, 4, 1, 2, 0,  2, 0, 1, 3, 4,  3, 1, 4, 0, 2,  4, 3, 2, 1, 0]
+# ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55, 79, 66, 77, 83, 34, 64, 19, 37, 54, 43, 79, 92, 62, 69, 77, 87, 87, 93, 38, 60, 41, 24, 83, 17, 49, 25, 44, 98, 77, 79, 43, 75, 96]
+
+# LAWRENCE la02 10*5
+# machine_data = [0, 3, 1, 4, 2, 4, 2, 0, 1, 3, 1, 2, 4, 0, 3, 2, 1, 4, 0, 3, 4, 0, 3, 2, 1, 1, 0, 4, 3, 2, 4, 1, 3, 0, 2, 1, 0, 2, 3, 4, 4, 0, 2, 1, 3, 4, 2, 1, 3, 0]
+# ptime_data = [20, 87, 31, 76, 17, 25, 32, 24, 18, 81, 72, 23, 28, 58, 99, 86, 76, 97, 45, 90, 27, 42, 48, 17, 46, 67, 98, 48, 27, 62, 28, 12, 19, 80, 50, 63, 94, 98, 50, 80, 14, 75, 50, 41, 55, 72, 18, 37, 79, 61]
+
+# LAWRENCE la03 10*5
+# machine_data =  [1, 2, 0, 4, 3, 2, 1, 0, 4, 3, 2, 3, 4, 0, 1, 4, 0, 2, 1, 3, 4, 0, 1, 3, 2, 4, 0, 1, 2, 3, 3, 2, 0, 4, 1, 4, 1, 0, 2, 3, 4, 0, 3, 2, 1, 4, 1, 0, 2, 3]
+# ptime_data = [23, 45, 82, 84, 38, 21, 29, 18, 41, 50, 38, 54, 16, 52, 52, 37, 54, 74, 62, 57, 57, 81, 61, 68, 30, 81, 79, 89, 89, 11, 33, 20, 91, 20, 66, 24, 84, 32, 55, 8, 56, 7, 54, 64, 39, 40, 83, 19, 8, 7]
+
+# LAWRENCE la04 10*5
+# machine_data = [0, 2, 3, 4, 1, 1, 3, 4, 2, 0, 1, 0, 3, 4, 2, 2, 4, 0, 3, 1, 1, 3, 4, 0, 2, 3, 2, 0, 4, 1, 2, 1, 0, 3, 4, 1, 3, 0, 4, 2, 2, 4, 0, 1, 3, 2, 4, 3, 1, 0]
+# ptime_data = [12, 94, 92, 91, 7, 19, 11, 66, 21, 87, 14, 75, 13, 16, 20, 95, 66, 7, 7, 77, 45, 6, 89, 15, 34, 77, 20, 76, 88, 53, 74, 88, 52, 27, 9, 88, 69, 62, 98, 52, 61, 9, 62, 52, 90, 54, 5, 59, 15, 88]
+
+# LAWRENCE la05 10*5
+# machine_data = [1, 0, 4, 2, 3, 4, 3, 0, 2, 1, 1, 3, 2, 0, 4, 0, 3, 4, 1, 2, 4, 2, 3, 1, 0, 3, 0, 4, 1, 2, 0, 3, 1, 4, 2, 4, 2, 3, 1, 0, 2, 3, 1, 0, 4, 2, 3, 0, 4, 1]
+# ptime_data = [72, 87, 95, 66, 60, 5, 35, 48, 39, 54, 46, 20, 21, 97, 55, 59, 19, 46, 34, 37, 23, 73, 25, 24, 28, 28, 45, 5, 78, 83, 53, 71, 37, 29, 12, 12, 87, 33, 55, 38, 49, 83, 40, 48, 7, 65, 17, 90, 27, 23]
 
 
 
+
+def get_file(best_chromosome, processing_time):
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    filename = f'la05{timestamp}.txt'
+    
+    directory = 'E:\Python\JobShopGA\Results\\la05'
+    
+    filepath = os.path.join(directory, filename)
+    
+    with open(filepath, 'w') as file:
+        file.write(f"Genetic Algorithm Specifications\n")
+        file.write("------------------------\n")
+        file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}\n')
+        file.write(f'Processing time = {processing_time}\n')
+        file.write(f'best Cmax = {best_chromosome.fitness}\n')
+        
+        file.write(f'random generated numbers:{best_chromosome.encoded_list}\n')
+        file.write(f'ranked list : {best_chromosome.ranked_list}\n operation_index :{best_chromosome.operation_index_list}\n')
+        file.write(f'machine sequence: {best_chromosome.machine_sequence}\n ptime sequence: {best_chromosome.ptime_sequence}\n Cmax: {best_chromosome.Cmax}\n')
 
 
 # print out necessary
@@ -83,8 +132,8 @@ def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
         job.operations = operation
     
-        
-        
+    
+
 def generate_population(N):
     population = []
     for _ in range(N):
@@ -136,10 +185,10 @@ def remove_duplicates(numbers):
         # Check if the number is already in the set
         if num in seen:
             # Modify the number slightly
-            modified_num = num + 0.1
+            modified_num = num + 0.01
             # Keep modifying until it's unique
             while modified_num in seen:
-                modified_num += 0.1
+                modified_num += 0.01
             modified_numbers.append(modified_num)
         else:
             modified_numbers.append(num)
@@ -305,6 +354,7 @@ def PlotGanttChar (chromosome):
         # ------------------------------
         # Figure and set of subplots
         
+    
     Cmax = chromosome.Cmax
     fig, ax = plt.subplots()
     fig.set_figheight(8)
@@ -376,6 +426,53 @@ def tournament(population):
         
     return winners
 
+def three_way_tournament(population):
+    selected_parents = []
+    population_size = len(population)
+    while len(selected_parents) < population_size:
+        tournament_indices = random.sample(range(population_size), 3)
+        tournament_individuals = [population[i] for i in tournament_indices]
+        tournament_fitness = [population[i].fitness for i in tournament_indices]
+        # Find the index of the fittest individual in the tournament
+        fittest_index = tournament_fitness.index(min(tournament_fitness))
+        # Select the fittest individual as a parent
+        selected_parents.append(tournament_individuals[fittest_index])
+        
+    return selected_parents
+
+
+def stochastic_universal_sampling(population, num_parents):
+    # Calculate inverted fitness values
+    max_fitness = max(chromosome.fitness for chromosome in population)
+    inverted_fitness = [max_fitness - chromosome.fitness for chromosome in population]
+
+    # Calculate total inverted fitness
+    total_inverted_fitness = sum(inverted_fitness)
+
+    # Calculate distance between selection pointers
+    pointer_distance = total_inverted_fitness / num_parents
+
+    # Randomly choose a starting point for the selection pointers
+    start_point = random.uniform(0, pointer_distance)
+
+    # Create selection pointers
+    pointers = [start_point + i * pointer_distance for i in range(num_parents)]
+
+    # Initialize selected individuals list
+    selected_individuals = []
+
+    # Iterate over selection pointers and select individuals
+    cumulative_fitness = 0
+    idx = 0
+    for pointer in pointers:
+        while cumulative_fitness < pointer:
+            cumulative_fitness += inverted_fitness[idx]
+            idx += 1
+        selected_individuals.append(population[idx])
+
+    return selected_individuals
+
+
 def single_point_crossover(chrom1, chrom2):
     
     parent1 = chrom1.encoded_list
@@ -385,7 +482,7 @@ def single_point_crossover(chrom1, chrom2):
     # r = 0.4
     
     p = random.randint(0,len(parent1))
-    if r > pc:
+    if r < pc:
         return chrom1 , chrom2
     else:
         offspring1 = parent1[0:p] + parent2[p:]
@@ -397,12 +494,37 @@ def single_point_crossover(chrom1, chrom2):
     
     return chrom_out1, chrom_out2
 
+def double_point_crossover(chrom1, chrom2):
+    parent1 = chrom1.encoded_list
+    parent2 = chrom2.encoded_list
+    
+    r = random.uniform(0,1)
+    
+    if r < pc:
+        return chrom1, chrom2
+    
+    indexes = [num for num in range(len(parent1))]
+    
+    point1 = random.randint(0, len(parent1) - 1)
+    point2 = random.randint(point1 + 1, len(parent1))
+    child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
+    child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
+        
+    checked_offsp1 = remove_duplicates(child1)
+    checked_offsp2 = remove_duplicates(child2)
+    offspring1 = process_chromosome(checked_offsp1)
+    offspring2 = process_chromosome(checked_offsp2)
+    
+    return offspring1, offspring2
+    
+    
+
 def single_bit_mutation(chromosome):
     
     r = random.uniform(0,1)
     code = chromosome.encoded_list
     
-    if r > pm:
+    if r < pm:
         return chromosome
     else:
         index = random.randint(0, len(code) - 1)
@@ -413,31 +535,32 @@ def single_bit_mutation(chromosome):
     return mutated_chromosome
 
 def next_gen_selection(parents, offsprings):
-    # total_population = []
-    # total_population.extend(parents)
-    # total_population.extend(offsprings)
+    total_population = []
+    total_population.extend(parents)
+    total_population.extend(offsprings)
     
-    # sortedGen = []
-    # return sortedGen[:N]
+    sortedGen = []
+    sortedGen = sorted(total_population, key = lambda x : x.fitness)
+    return sortedGen[:N], sortedGen[0]
     
     # Use 20% parents 80% offsprings
-    sorted_parent = []
-    number = len(parents)  # Your number
-    twenty_percent = int(number * 0.2)
-    sorted_parents = sorted(parents, key = lambda  x : x.fitness )
+    # sorted_parent = []
+    # number = len(parents)  # Your number
+    # twenty_percent = int(number * 0.2)
+    # sorted_parents = sorted(parents, key = lambda  x : x.fitness )
     
-    sorted_offsprings = []
-    number = len(offsprings)  # Your number
-    eighty_percent = number - twenty_percent
-    sorted_offsprings = sorted(sorted_offsprings, key = lambda  x : x.fitness )
+    # sorted_offsprings = []
+    # number = len(offsprings)  # Your number
+    # eighty_percent = number - twenty_percent
+    # sorted_offsprings = sorted(sorted_offsprings, key = lambda  x : x.fitness )
     
-    total_population = sorted_parents[0:twenty_percent] + sorted_offsprings[twenty_percent:]
-    sorted_total_population = sorted(total_population, key = lambda  x : x.fitness )
-    return sorted_total_population
+    # total_population = sorted_parents[0:twenty_percent] + sorted_offsprings[twenty_percent:]
+    # sorted_total_population = sorted(total_population, key = lambda  x : x.fitness )
+    return total_population, sorted_total_population[0]
     
 def swapping(chromosome):
     r = random.uniform(0,1)
-    if r > 0.5:
+    if r < pswap:
         return chromosome
     
     code = chromosome.encoded_list
@@ -456,7 +579,7 @@ def swapping(chromosome):
 def inversion(chromosome):
     
     r = random.uniform(0,1)
-    if r > 0.5:
+    if r < pinv:
         return chromosome
     
     code = chromosome.encoded_list
@@ -473,6 +596,21 @@ def inversion(chromosome):
     inverted_chromosome = process_chromosome(code)
     
     return inverted_chromosome
+
+
+
+def create_disturbance(population):
+    p = N//2
+    first_half =  population[:p]
+    rem = []
+    for _ in range(N):
+        num = [round(random.uniform(0,m*n), 2) for _ in range(N - p)]
+        rem.append(process_chromosome(num))
+    
+    new_population = first_half + rem
+    return new_population
+        
+
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -628,6 +766,7 @@ def main2():
         
     # plt.show()
         
+# main Loop running NOT  OPTIMIZED
 def main3():
     
     t = 0
@@ -717,7 +856,121 @@ def main3():
     plt.show()
     
     print('\n')
+    
+# optimizing computation and O(n)
+def main4():
+    
+    # Record the start time
+    start_time = time.time()
+    flag = 0
+    count = 0
+    t = 0
+    ypoints = []
+    
+    # generate initial population
+    initial_population = generate_population(N)
+    population = []
+    for encoded_list in initial_population:
+        # print(f'generated list: {encoded_list}')
+        chromosome = process_chromosome(encoded_list)
+        population.append(chromosome)
+        
+    sorted_population = sorted(population, key = lambda  x : x.fitness )
+        
+    best_chromosome = sorted_population[0]
+        
+    # start generations
+    while t < T:
+        
+        # create mating pool
+        winners_list = tournament(population)
+        # winners_list = three_way_tournament(population)
+        
+        # winners_list = tournament(population)
+        
+        # perform crossover on mating pool
+        indices = [x for x in range(N)]
+        offspring_list = winners_list
+        while len(indices) != 0:
+            i1 = random.choice(indices)
+            i2 = random.choice(indices)
+            while i1 == i2:
+                i2 = random.choice(indices)
+                
+            rchoice = random.uniform(0,1)
+            if rchoice > 0.5:
+                offspring1, offspring2 = single_point_crossover(winners_list[i1], winners_list[i2])
+            else:
+                offspring1, offspring2 = double_point_crossover(winners_list[i1], winners_list[i2])
+            offspring_list[i1] = offspring1
+            offspring_list[i2] = offspring2
+            
+            indices.remove(i1)
+            indices.remove(i2)
+            
+        # perform mutation
+        enhanced_list = []
+        for chromosome in offspring_list:
+            mutated_chromosome = single_bit_mutation(chromosome)
+            
+            # perform swapping operation
+            swap_chromosome = swapping(mutated_chromosome)
+        
+            # perform inversion operation on chromosome
+            inverted_chromosome = inversion(swap_chromosome)
+            
+            enhanced_list.append(inverted_chromosome)
+            
+            # selection of survivors for next generation
+        
+        survivors, best_in_gen = next_gen_selection(winners_list, enhanced_list)
+        
+        survivors[-1] = best_in_gen
+        if best_in_gen.fitness < best_chromosome.fitness:
+            best_chromosome = best_in_gen
+            
+        
+            
+            
+        ypoints.append(best_chromosome.fitness)
+        winners_list = survivors
+        
+        if (t + 1) % 25 == 0:
+            print(f'At generation {t + 1}, best fitness :{best_chromosome.fitness}')
+        
+        
+        
+        t += 1
+        # end of loop
+        
+    
+    
+    
+    xpoints = [x for x in range(1, t+ 1)]
+    plt.plot(xpoints, ypoints,  color= 'b')
+    
+    # Record the end time
+    end_time = time.time()
+    processing_time = end_time - start_time
+    
+    
+    # get_file(best_chromosome, processing_time)
+    
+    
+    # print(f'best Cmax = {ypoints[N-1]}')
+    print(f'best Cmax = {best_chromosome.fitness}')
+    
+    print('random generated numbers:',best_chromosome.encoded_list)
+    print(f'ranked list : {best_chromosome.ranked_list}\n operation_index :{best_chromosome.operation_index_list},\n operation object{best_chromosome.operation_schedule}\n')
+    print(f'machine sequence: {best_chromosome.machine_sequence}\n ptime sequence: {best_chromosome.ptime_sequence}\n Cmax: {best_chromosome.Cmax}')
+
+    
+    PlotGanttChar(best_chromosome)
+    
+    plt.show()
+    
+    print('\n')
         
         
 if __name__ == '__main__':
-    main3()
+    main4()
