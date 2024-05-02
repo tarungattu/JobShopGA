@@ -10,15 +10,15 @@ from chromosome import Chromosome
 import time
 import os
 
-m = 6
-n = 6
-N = 250
+m = 15
+n = 15
+N = 350
 pc = 0.8
-pm = 0.01
+pm = 0.3
 pswap = 0.01
 pinv = 0.01
 
-T = 200
+T = 300
 
 # Pinedo book first example
 # machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -35,11 +35,11 @@ T = 200
 
 # E. Taillard Benchmark first instance 15*15
 
-# seed_value = 398197754
-# random.seed(seed_value)
-# machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
+seed_value = 398197754
+random.seed(seed_value) 
+machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
 
-# ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
+ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
 
 # second instance 15*15
 # machine_data = [9, 14, 4, 13, 10, 3, 7, 8, 0, 5, 1, 2, 12, 6, 11, 10, 8, 11, 14, 3, 13, 9, 7, 4, 2, 6, 1, 5, 12, 0, 7, 0, 6, 5, 14, 13, 2, 11, 4, 12, 1, 9, 3, 10, 8, 9, 11, 14, 0, 1, 8, 5, 10, 12, 4, 13, 3, 6, 7, 2, 11, 4, 13, 3, 8, 1, 10, 12, 2, 14, 6, 7, 0, 9, 5, 5, 2, 1, 10, 0, 4, 8, 14, 6, 3, 9, 7, 11, 12, 13, 5, 10, 13, 0, 9, 8, 1, 11, 14, 7, 12, 2, 6, 4, 3, 12, 0, 9, 3, 13, 6, 5, 7, 2, 14, 11, 8, 10, 1, 4, 11, 10, 5, 13, 1, 9, 8, 7, 3, 6, 0, 2, 14, 12, 4, 2, 14, 3, 10, 6, 1, 0, 13, 11, 4, 5, 8, 7, 12, 9, 11, 14, 13, 5, 4, 9, 1, 6, 12, 0, 2, 8, 10, 3, 7, 12, 3, 10, 8, 4, 7, 13, 11, 14, 1, 2, 0, 5, 6, 9, 8, 13, 5, 0, 11, 9, 4, 12, 1, 10, 6, 2, 7, 14, 3, 2, 5, 4, 3, 9, 1, 11, 13, 7, 6, 10, 14, 0, 8, 12, 1, 10, 4, 2, 0, 7, 6, 9, 11, 12, 5, 14, 3, 13, 8]
@@ -54,8 +54,8 @@ T = 200
 # machine_data = [3, 11, 14, 1, 10, 2, 4, 7, 0, 12, 5, 9, 6, 13, 8, 5, 0, 3, 8, 4, 1, 12, 14, 6, 7, 10, 2, 9, 13, 11, 2, 3, 14, 0, 9, 12, 5, 4, 7, 10, 8, 11, 13, 1, 6, 8, 10, 1, 13, 3, 4, 14, 9, 2, 5, 11, 7, 0, 6, 12, 14, 8, 1, 2, 10, 9, 12, 4, 6, 5, 0, 13, 3, 11, 7, 3, 10, 1, 5, 6, 0, 8, 7, 11, 13, 2, 14, 12, 9, 4, 2, 10, 1, 12, 8, 0, 7, 6, 14, 13, 4, 3, 5, 9, 11, 1, 0, 2, 4, 7, 13, 11, 3, 12, 5, 6, 14, 9, 8, 10, 4, 5, 9, 10, 7, 6, 2, 1, 12, 3, 13, 0, 8, 14, 11, 1, 4, 3, 10, 14, 0, 6, 13, 11, 8, 5, 12, 7, 9, 2, 3, 10, 1, 0, 9, 8, 14, 6, 4, 7, 2, 12, 5, 11, 13, 2, 7, 6, 8, 3, 5, 14, 4, 1, 0, 9, 10, 13, 11, 12, 0, 7, 14, 8, 12, 10, 9, 3, 6, 1, 4, 2, 11, 13, 5, 12, 3, 9, 4, 1, 0, 10, 6, 5, 2, 14, 13, 7, 8, 11, 3, 14, 6, 5, 13, 9, 1, 0, 12, 7, 2, 4, 10, 8, 11, 5, 14, 6, 12, 8, 2, 4, 9, 11, 13, 3, 1, 7, 0, 10, 3, 7, 10, 14, 0, 8, 1, 11, 5, 13, 4, 12, 6, 9, 2, 10, 8, 2, 11, 13, 6, 14, 3, 9, 7, 4, 5, 12, 0, 1, 3, 2, 12, 13, 1, 6, 14, 5, 4, 8, 9, 11, 0, 10, 7, 11, 14, 5, 6, 10, 9, 13, 1, 4, 8, 0, 3, 12, 2, 7]
 
 # FISHER THOMPSON ft06 6*6 
-ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
-machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
+# ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
+# machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
 
 
 # LAWRENCE la01 10*5
@@ -127,6 +127,8 @@ def create_operation_data(machine_data, ptime_data, m):
     # # Reshape the array to get the desired format
     # reshaped_array = merged_array.reshape((len(machine_data) // len(set(machine_data)), len(set(machine_data)), 2))
     # return reshaped_array
+    
+operation_data = create_operation_data(machine_data,ptime_data, m)
 
 def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
@@ -312,13 +314,15 @@ def get_Cmax(machines):
     return max(runtimes)
 
 def process_chromosome(chromosome):
-    operation_data = create_operation_data(machine_data,ptime_data, m)
-    
+
     # print(operation_data)
     
     jobs = [Job(number) for number in range(n)]
     machines = [Machine(number) for number in range(m)]
     assign_operations(jobs, operation_data)
+    
+    # check for repeated numbers
+    chromosome = remove_duplicates(chromosome)
     
     ranked_list = induv_integer_list(chromosome)
     operation_index_list = induv_getJobindex(ranked_list)
@@ -482,15 +486,15 @@ def single_point_crossover(chrom1, chrom2):
     # r = 0.4
     
     p = random.randint(0,len(parent1))
-    if r < pc:
+    if r > pc:
         return chrom1 , chrom2
     else:
         offspring1 = parent1[0:p] + parent2[p:]
         offspring2 = parent2[0:p] + parent1[p:]
-        checked_offsp1 = remove_duplicates(offspring1)
-        checked_offsp2 = remove_duplicates(offspring2)
-        chrom_out1 = process_chromosome(checked_offsp1)
-        chrom_out2 = process_chromosome(checked_offsp2)
+        # checked_offsp1 = remove_duplicates(offspring1)
+        # checked_offsp2 = remove_duplicates(offspring2)
+        chrom_out1 = process_chromosome(offspring1)
+        chrom_out2 = process_chromosome(offspring2)
     
     return chrom_out1, chrom_out2
 
@@ -500,7 +504,7 @@ def double_point_crossover(chrom1, chrom2):
     
     r = random.uniform(0,1)
     
-    if r < pc:
+    if r > pc:
         return chrom1, chrom2
     
     indexes = [num for num in range(len(parent1))]
@@ -510,10 +514,10 @@ def double_point_crossover(chrom1, chrom2):
     child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
     child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
         
-    checked_offsp1 = remove_duplicates(child1)
-    checked_offsp2 = remove_duplicates(child2)
-    offspring1 = process_chromosome(checked_offsp1)
-    offspring2 = process_chromosome(checked_offsp2)
+    # checked_offsp1 = remove_duplicates(child1)
+    # checked_offsp2 = remove_duplicates(child2)
+    offspring1 = process_chromosome(child1)
+    offspring2 = process_chromosome(child2)
     
     return offspring1, offspring2
     
@@ -524,13 +528,13 @@ def single_bit_mutation(chromosome):
     r = random.uniform(0,1)
     code = chromosome.encoded_list
     
-    if r < pm:
+    if r > pm:
         return chromosome
     else:
         index = random.randint(0, len(code) - 1)
         code[index] = round(random.uniform(0,m*n), 2)
-        checked_code = remove_duplicates(code)
-        mutated_chromosome = process_chromosome(checked_code)
+        # checked_code = remove_duplicates(code)
+        mutated_chromosome = process_chromosome(code)
     
     return mutated_chromosome
 
@@ -560,7 +564,7 @@ def next_gen_selection(parents, offsprings):
     
 def swapping(chromosome):
     r = random.uniform(0,1)
-    if r < pswap:
+    if r > pswap:
         return chromosome
     
     code = chromosome.encoded_list
@@ -579,7 +583,7 @@ def swapping(chromosome):
 def inversion(chromosome):
     
     r = random.uniform(0,1)
-    if r < pinv:
+    if r > pinv:
         return chromosome
     
     code = chromosome.encoded_list
@@ -886,7 +890,6 @@ def main4():
         winners_list = tournament(population)
         # winners_list = three_way_tournament(population)
         
-        # winners_list = tournament(population)
         
         # perform crossover on mating pool
         indices = [x for x in range(N)]
