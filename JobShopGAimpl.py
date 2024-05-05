@@ -10,19 +10,19 @@ from chromosome import Chromosome
 import time
 import os
 
-m = 15
-n = 15
-N = 350
+m = 4
+n = 3
+N = 200
 pc = 0.8
-pm = 0.3
+pm = 0.01
 pswap = 0.01
 pinv = 0.01
 
-T = 300
+T = 250
 
 # Pinedo book first example
-# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 #Pinedo Book second example
 # machine_data = [0,1,2,3, 0,1,3,2, 2,0,1,3]
@@ -35,11 +35,11 @@ T = 300
 
 # E. Taillard Benchmark first instance 15*15
 
-seed_value = 398197754
-random.seed(seed_value) 
-machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
+# seed_value = 398197754
+# random.seed(seed_value) 
+# machine_data = [6, 12, 4, 7, 3, 2, 10, 11, 8, 14, 9, 13, 5, 0, 1, 4, 5, 7, 14, 13, 8, 11, 9, 6, 10, 0, 3, 12, 1, 2, 1, 8, 9, 12, 6, 11, 13, 5, 0, 2, 7, 10, 4, 3, 14, 5, 2, 9, 6, 10, 0, 13, 4, 7, 14, 11, 8, 12, 1, 3, 7, 8, 6, 10, 4, 9, 2, 14, 12, 5, 1, 13, 11, 0, 3, 5, 3, 12, 13, 11, 4, 14, 7, 2, 1, 10, 0, 9, 6, 8, 12, 3, 7, 8, 14, 6, 1, 11, 4, 5, 2, 10, 0, 13, 9, 11, 5, 0, 7, 12, 13, 14, 1, 2, 8, 4, 3, 9, 6, 10, 10, 11, 6, 14, 0, 1, 2, 5, 12, 4, 8, 7, 9, 13, 3, 6, 11, 9, 2, 8, 0, 13, 3, 10, 7, 1, 12, 14, 4, 5, 4, 7, 13, 0, 5, 12, 6, 8, 14, 10, 3, 1, 11, 9, 2, 2, 14, 0, 12, 6, 10, 7, 5, 8, 9, 13, 1, 3, 11, 4, 5, 8, 10, 2, 3, 6, 9, 0, 13, 4, 1, 11, 12, 7, 14, 8, 14, 4, 13, 5, 6, 9, 1, 12, 7, 11, 10, 3, 2, 0, 10, 8, 12, 6, 4, 1, 13, 14, 11, 0, 7, 3, 2, 9, 5]
 
-ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
+# ptime_data = [94, 66, 10, 53, 26, 15, 65, 82, 10, 27, 93, 92, 96, 70, 83, 74, 31, 88, 51, 57, 78, 8, 7, 91, 79, 18, 51, 18, 99, 33, 4, 82, 40, 86, 50, 54, 21, 6, 54, 68, 82, 20, 39, 35, 68, 73, 23, 30, 30, 53, 94, 58, 93, 32, 91, 30, 56, 27, 92, 9, 78, 23, 21, 60, 36, 29, 95, 99, 79, 76, 93, 42, 52, 42, 96, 29, 61, 88, 70, 16, 31, 65, 83, 78, 26, 50, 87, 62, 14, 30, 18, 75, 20, 4, 91, 68, 19, 54, 85, 73, 43, 24, 37, 87, 66, 32, 52, 9, 49, 61, 35, 99, 62, 6, 62, 7, 80, 3, 57, 7, 85, 30, 96, 91, 13, 87, 82, 83, 78, 56, 85, 8, 66, 88, 15, 5, 59, 30, 60, 41, 17, 66, 89, 78, 88, 69, 45, 82, 6, 13, 90, 27, 1, 8, 91, 80, 89, 49, 32, 28, 90, 93, 6, 35, 73, 47, 43, 75, 8, 51, 3, 84, 34, 28, 60, 69, 45, 67, 58, 87, 65, 62, 97, 20, 31, 33, 33, 77, 50, 80, 48, 90, 75, 96, 44, 28, 21, 51, 75, 17, 89, 59, 56, 63, 18, 17, 30, 16, 7, 35, 57, 16, 42, 34, 37, 26, 68, 73, 5, 8, 12, 87, 83, 20, 97]
 
 # second instance 15*15
 # machine_data = [9, 14, 4, 13, 10, 3, 7, 8, 0, 5, 1, 2, 12, 6, 11, 10, 8, 11, 14, 3, 13, 9, 7, 4, 2, 6, 1, 5, 12, 0, 7, 0, 6, 5, 14, 13, 2, 11, 4, 12, 1, 9, 3, 10, 8, 9, 11, 14, 0, 1, 8, 5, 10, 12, 4, 13, 3, 6, 7, 2, 11, 4, 13, 3, 8, 1, 10, 12, 2, 14, 6, 7, 0, 9, 5, 5, 2, 1, 10, 0, 4, 8, 14, 6, 3, 9, 7, 11, 12, 13, 5, 10, 13, 0, 9, 8, 1, 11, 14, 7, 12, 2, 6, 4, 3, 12, 0, 9, 3, 13, 6, 5, 7, 2, 14, 11, 8, 10, 1, 4, 11, 10, 5, 13, 1, 9, 8, 7, 3, 6, 0, 2, 14, 12, 4, 2, 14, 3, 10, 6, 1, 0, 13, 11, 4, 5, 8, 7, 12, 9, 11, 14, 13, 5, 4, 9, 1, 6, 12, 0, 2, 8, 10, 3, 7, 12, 3, 10, 8, 4, 7, 13, 11, 14, 1, 2, 0, 5, 6, 9, 8, 13, 5, 0, 11, 9, 4, 12, 1, 10, 6, 2, 7, 14, 3, 2, 5, 4, 3, 9, 1, 11, 13, 7, 6, 10, 14, 0, 8, 12, 1, 10, 4, 2, 0, 7, 6, 9, 11, 12, 5, 14, 3, 13, 8]
@@ -129,6 +129,7 @@ def create_operation_data(machine_data, ptime_data, m):
     # return reshaped_array
     
 operation_data = create_operation_data(machine_data,ptime_data, m)
+print(operation_data)
 
 def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
@@ -160,7 +161,7 @@ def integer_list(population):
         
     return ranked_population
 
-def induv_integer_list(chromosome):
+def indiv_integer_list(chromosome):
     # ranked_population = []
     # sorted_list = []
     # ranks = {}
@@ -213,7 +214,7 @@ def getJobindex(population):
     
     return operation_index_pop
 
-def induv_getJobindex(chromosome):
+def indiv_getJobindex(chromosome):
     new_index = 0
     operation_index_pop = []
 
@@ -239,7 +240,7 @@ def schedule_operations(population, jobs):
                 operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
     return operation_list
 
-def induv_schedule_operations(chromosome, jobs):
+def indiv_schedule_operations(chromosome, jobs):
     operation_list = []
     explored = []
     
@@ -247,7 +248,7 @@ def induv_schedule_operations(chromosome, jobs):
         explored.append(chromosome[i])
         numcount = explored.count(chromosome[i])
         if numcount <= m:
-            operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
+            operation_list.append(jobs[chromosome[i]].operations[numcount-1])  # changed chromosome[i] to chromosome[i]-1
     return operation_list
             
 # gives each operation a job number of whihc job it is part of
@@ -321,14 +322,14 @@ def process_chromosome(chromosome):
     machines = [Machine(number) for number in range(m)]
     assign_operations(jobs, operation_data)
     
-    # check for repeated numbers
+    
     chromosome = remove_duplicates(chromosome)
     
-    ranked_list = induv_integer_list(chromosome)
-    operation_index_list = induv_getJobindex(ranked_list)
+    ranked_list = indiv_integer_list(chromosome)
+    operation_index_list = indiv_getJobindex(ranked_list)
     install_operations(jobs)
     assign_data_to_operations(jobs, operation_data)
-    operation_schedule = induv_schedule_operations(operation_index_list, jobs)
+    operation_schedule = indiv_schedule_operations(operation_index_list, jobs)
     
     # get the sequence of machines
     machine_sequence = get_machine_sequence(operation_schedule)
@@ -491,10 +492,10 @@ def single_point_crossover(chrom1, chrom2):
     else:
         offspring1 = parent1[0:p] + parent2[p:]
         offspring2 = parent2[0:p] + parent1[p:]
-        # checked_offsp1 = remove_duplicates(offspring1)
-        # checked_offsp2 = remove_duplicates(offspring2)
-        chrom_out1 = process_chromosome(offspring1)
-        chrom_out2 = process_chromosome(offspring2)
+        checked_offsp1 = remove_duplicates(offspring1)
+        checked_offsp2 = remove_duplicates(offspring2)
+        chrom_out1 = process_chromosome(checked_offsp1)
+        chrom_out2 = process_chromosome(checked_offsp2)
     
     return chrom_out1, chrom_out2
 
@@ -514,10 +515,10 @@ def double_point_crossover(chrom1, chrom2):
     child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
     child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
         
-    # checked_offsp1 = remove_duplicates(child1)
-    # checked_offsp2 = remove_duplicates(child2)
-    offspring1 = process_chromosome(child1)
-    offspring2 = process_chromosome(child2)
+    checked_offsp1 = remove_duplicates(child1)
+    checked_offsp2 = remove_duplicates(child2)
+    offspring1 = process_chromosome(checked_offsp1)
+    offspring2 = process_chromosome(checked_offsp2)
     
     return offspring1, offspring2
     
@@ -533,33 +534,33 @@ def single_bit_mutation(chromosome):
     else:
         index = random.randint(0, len(code) - 1)
         code[index] = round(random.uniform(0,m*n), 2)
-        # checked_code = remove_duplicates(code)
-        mutated_chromosome = process_chromosome(code)
+        checked_code = remove_duplicates(code)
+        mutated_chromosome = process_chromosome(checked_code)
     
     return mutated_chromosome
 
 def next_gen_selection(parents, offsprings):
-    total_population = []
-    total_population.extend(parents)
-    total_population.extend(offsprings)
+    # total_population = []
+    # total_population.extend(parents)
+    # total_population.extend(offsprings)
     
-    sortedGen = []
-    sortedGen = sorted(total_population, key = lambda x : x.fitness)
-    return sortedGen[:N], sortedGen[0]
+    # sortedGen = []0
+    # sortedGen = sorted(total_population, key = lambda x : x.fitness)
+    # return sortedGen[:N], sortedGen[0]
     
     # Use 20% parents 80% offsprings
-    # sorted_parent = []
-    # number = len(parents)  # Your number
-    # twenty_percent = int(number * 0.2)
-    # sorted_parents = sorted(parents, key = lambda  x : x.fitness )
+    sorted_parent = []
+    number = len(parents)  # Your number
+    twenty_percent = int(number * 0.2)
+    sorted_parents = sorted(parents, key = lambda  x : x.fitness )
     
-    # sorted_offsprings = []
-    # number = len(offsprings)  # Your number
-    # eighty_percent = number - twenty_percent
-    # sorted_offsprings = sorted(sorted_offsprings, key = lambda  x : x.fitness )
+    sorted_offsprings = []
+    number = len(offsprings)  # Your number
+    eighty_percent = number - twenty_percent
+    sorted_offsprings = sorted(sorted_offsprings, key = lambda  x : x.fitness )
     
-    # total_population = sorted_parents[0:twenty_percent] + sorted_offsprings[twenty_percent:]
-    # sorted_total_population = sorted(total_population, key = lambda  x : x.fitness )
+    total_population = sorted_parents[0:twenty_percent] + sorted_offsprings[twenty_percent:]
+    sorted_total_population = sorted(total_population, key = lambda  x : x.fitness )
     return total_population, sorted_total_population[0]
     
 def swapping(chromosome):
@@ -613,7 +614,63 @@ def create_disturbance(population):
     
     new_population = first_half + rem
     return new_population
+
+def SPT_heuristic(operation_data):
+    operation_index_list = []
+    n = len(operation_data[0])  # Number of operations
+    m = len(operation_data)     # Number of jobs
+
+    for j in range(n):
+        tlist = [(i, operation_data[i][j]) for i in range(m)]
+        tlist.sort(key=lambda x: x[1][1])  # Sort based on processing time
+        operation_index_list.extend([t[0] for t in tlist])
+
+    return operation_index_list
         
+
+def decode_operations_to_schedule(operation_index, num_jobs=3):
+    n = len(operation_index)
+    possible_indices = [[(num_jobs * j + op) for j in range(n // num_jobs + 1)] for op in operation_index]
+    ranked_list = [0] * n
+    used_indices = set()
+    is_valid = True
+    for i, options in enumerate(possible_indices):
+        # Find the smallest available index that hasn't been used yet
+        for option in sorted(options):
+            if option not in used_indices and option < n:
+                ranked_list[i] = option
+                used_indices.add(option)
+                break
+        else:
+            # If no valid option is found, note that configuration may be invalid
+            is_valid = False
+            break
+
+    if not is_valid:
+        return None, None  # Indicate that no valid configuration was found
+    
+    random_numbers = [0] * n
+    index_to_number = {rank: i for i, rank in enumerate(ranked_list)}
+    for i in range(n):
+        random_numbers[index_to_number[i]] = i + 1  # Simple 1-to-n mapping for simplicity
+
+    return ranked_list, random_numbers
+
+def generate_population_with_heuristic(operation_data):
+    p = N//2
+    
+    population = []
+    for _ in range(p):
+        num = [round(random.uniform(0,m*n), 2)]
+        population.append(process_chromosome(num))
+    
+    for _ in range(N - p):
+        spt = SPT_heuristic(operation_data)
+        code = decode_operations_to_schedule(spt)
+        population.append(process_chromosome(code))
+        
+    return population
+    
 
 
 def main1():
@@ -901,9 +958,10 @@ def main4():
                 i2 = random.choice(indices)
                 
             rchoice = random.uniform(0,1)
-            if rchoice > 0.5:
+            if rchoice > 0:
                 offspring1, offspring2 = single_point_crossover(winners_list[i1], winners_list[i2])
             else:
+                # potential bug, skipping job
                 offspring1, offspring2 = double_point_crossover(winners_list[i1], winners_list[i2])
             offspring_list[i1] = offspring1
             offspring_list[i2] = offspring2

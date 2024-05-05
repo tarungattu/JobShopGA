@@ -7,6 +7,7 @@ from job import Job
 from machine import Machine
 from operation import Operation
 from chromosome import Chromosome
+from scipy.stats import rankdata
 
 m = 4
 n = 3
@@ -55,12 +56,14 @@ def create_operation_data(machine_data, ptime_data, m):
     # # Reshape the array to get the desired format
     # reshaped_array = merged_array.reshape((len(machine_data) // len(set(machine_data)), len(set(machine_data)), 2))
     # return reshaped_array
+    
+operation_data = create_operation_data(machine_data,ptime_data, m)
 
 def assign_operations(jobs, operation_data):
     for job, operation in zip(jobs, operation_data):
         job.operations = operation
     
-        
+operation_data = create_operation_data(machine_data,ptime_data, m)
         
 def generate_population(N):
     population = []
@@ -87,21 +90,23 @@ def integer_list(population):
     return ranked_population
 
 def induv_integer_list(chromosome):
-    ranked_population = []
-    sorted_list = []
-    ranks = {}
-    # Sort the list to get ranks in ascending order
-    sorted_list = sorted(chromosome)
+    # ranked_population = []
+    # sorted_list = []
+    # ranks = {}
+    # # Sort the list to get ranks in ascending order
+    # sorted_list = sorted(chromosome)
             
-    # Create a dictionary to store the ranks of each float number
-    ranks = {value: index for index, value in enumerate(sorted_list)}
+    # # Create a dictionary to store the ranks of each float number
+    # ranks = {value: index for index, value in enumerate(sorted_list)}
             
-    # Convert each float number to its corresponding rank
-    rank_list = [ranks[value] + 1 for value in chromosome]
-    ranked_population.append(rank_list)
+    # # Convert each float number to its corresponding rank
+    # rank_list = [ranks[value] + 1 for value in chromosome]
+    # ranked_population.append(rank_list)
         
-    return rank_list
+    # return rank_list
     
+    ranks = rankdata(chromosome)
+    return [int(rank - 1) for rank in ranks]
     
 # get job operation sequence
 def getJobindex(population):
@@ -124,7 +129,7 @@ def induv_getJobindex(chromosome):
     tlist = []
     temp = chromosome
     for j in range(len(chromosome)):
-        new_index = (temp[j] % n) + 1
+        new_index = (temp[j] % n)
         tlist.append(new_index)
     operation_index_pop = tlist
     
@@ -151,7 +156,7 @@ def induv_schedule_operations(chromosome, jobs):
         explored.append(chromosome[i])
         numcount = explored.count(chromosome[i])
         if numcount <= m:
-            operation_list.append(jobs[chromosome[i]-1].operations[numcount-1])
+            operation_list.append(jobs[chromosome[i]].operations[numcount-1])
     return operation_list
             
 # gives each operation a job number of whihc job it is part of
@@ -159,7 +164,7 @@ def install_operations(jobs):
     for job in jobs:
         job.operations = [Operation(job.job_number) for i in range(m)]
 
-operation_data = create_operation_data(machine_data,ptime_data, m)
+
 
 def assign_data_to_operations(jobs, operation_data):
     for job,sublist in zip(jobs, operation_data):
@@ -217,9 +222,10 @@ def get_Cmax(machines):
         
     return max(runtimes)
 
+
 def process_chromosome(chromosome):
-    operation_data = create_operation_data(machine_data,ptime_data, m)
-    print(operation_data)
+    
+    # print(operation_data)
     jobs = [Job(number) for number in range(n)]
     machines = [Machine(number) for number in range(m)]
     assign_operations(jobs, operation_data)
@@ -228,7 +234,7 @@ def process_chromosome(chromosome):
     operation_index_list = induv_getJobindex(ranked_list)
     
     # CASE 1
-    # operation_index_list = [2, 0, 2, 1, 0, 2, 0, 1, 1, 1, 2, 0]
+    # operation_index_list = [1, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2, 1]
     
     
     install_operations(jobs)
@@ -379,6 +385,62 @@ def inversion(chromosome):
     p, q = min(p, q), max(p, q)
     code[p:q+1] = reversed(code[p:q+1])
     print(code)
+    
+def SPT_heuristic(operation_data):
+    operation_index_list = []
+    n = len(operation_data[0])  # Number of operations
+    m = len(operation_data)     # Number of jobs
+
+    for j in range(n):
+        tlist = [(i, operation_data[i][j]) for i in range(m)]
+        tlist.sort(key=lambda x: x[1][1])  # Sort based on processing time
+        operation_index_list.extend([t[0] for t in tlist])
+
+    return operation_index_list
+        
+
+def decode_operations_to_schedule(operation_index, num_jobs=3):
+    n = len(operation_index)
+    possible_indices = [[(num_jobs * j + op) for j in range(n // num_jobs + 1)] for op in operation_index]
+    ranked_list = [0] * n
+    used_indices = set()
+    is_valid = True
+    for i, options in enumerate(possible_indices):
+        # Find the smallest available index that hasn't been used yet
+        for option in sorted(options):
+            if option not in used_indices and option < n:
+                ranked_list[i] = option
+                used_indices.add(option)
+                break
+        else:
+            # If no valid option is found, note that configuration may be invalid
+            is_valid = False
+            break
+
+    if not is_valid:
+        return None, None  # Indicate that no valid configuration was found
+    
+    random_numbers = [0] * n
+    index_to_number = {rank: i for i, rank in enumerate(ranked_list)}
+    for i in range(n):
+        random_numbers[index_to_number[i]] = i + 1  # Simple 1-to-n mapping for simplicity
+
+    return ranked_list, random_numbers
+
+def generate_population_with_heuristic(operation_data):
+    p = N//2
+    
+    population = []
+    for _ in range(p):
+        num = [round(random.uniform(0,m*n), 2)]
+        population.append(process_chromosome(num))
+    
+    for _ in range(N - p):
+        spt = SPT_heuristic(operation_data)
+        code = decode_operations_to_schedule(spt)
+        population.append(process_chromosome(code))
+        
+    return population
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -438,6 +500,7 @@ def main1():
 def main2():
     initial_population = generate_population(N)
     
+    print(operation_data)
     population = []
     # for encoded_list in initial_population:
     #     print(f'generated list: {encoded_list}')
@@ -454,8 +517,20 @@ def main2():
     
     population.append(chromosome_test2)
     
+    operation_seq_index = SPT_heuristic(operation_data)
+    print('spt operation sequence:', operation_seq_index)
+    ranked_list, random_numbers_list = decode_operations_to_schedule(operation_seq_index)
+    print('decoded ranked_list', ranked_list)
+    print('decoded random numbers list', random_numbers_list)
+    chromosome_test3 = process_chromosome(random_numbers_list)
+    print('random generated numbers:',chromosome_test3.encoded_list)
+    print(f'ranked list : {chromosome_test3.ranked_list}\n operation_index :{chromosome_test3.operation_index_list},\n operation object{chromosome_test3.operation_schedule}\n')
+    print(f'machine sequence: {chromosome_test3.machine_sequence}\n ptime sequence: {chromosome_test3.ptime_sequence}\n Cmax: {chromosome_test3.Cmax}')
+    for machine in chromosome_test3.machine_list:
+        print(f'machine no: {machine.machine_id}, Cj :{machine.finish_operation_time}')
     
-    
+    PlotGanttChar(chromosome_test3)
+    plt.show()
     
     # for chromosome in population:
     #     for machine in chromosome.machine_list:
