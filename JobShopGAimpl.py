@@ -9,20 +9,21 @@ from operation import Operation
 from chromosome import Chromosome
 import time
 import os
+from datetime import datetime
 
-m = 4
-n = 3
-N = 200
+m = 5
+n = 10
+N = 350
 pc = 0.8
-pm = 0.01
-pswap = 0.01
-pinv = 0.01
+pm = 0.05
+pswap = 0.05
+pinv = 0.05
 
-T = 250
+T = 450
 
 # Pinedo book first example
-machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 #Pinedo Book second example
 # machine_data = [0,1,2,3, 0,1,3,2, 2,0,1,3]
@@ -71,8 +72,8 @@ ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 # ptime_data = [23, 45, 82, 84, 38, 21, 29, 18, 41, 50, 38, 54, 16, 52, 52, 37, 54, 74, 62, 57, 57, 81, 61, 68, 30, 81, 79, 89, 89, 11, 33, 20, 91, 20, 66, 24, 84, 32, 55, 8, 56, 7, 54, 64, 39, 40, 83, 19, 8, 7]
 
 # LAWRENCE la04 10*5
-# machine_data = [0, 2, 3, 4, 1, 1, 3, 4, 2, 0, 1, 0, 3, 4, 2, 2, 4, 0, 3, 1, 1, 3, 4, 0, 2, 3, 2, 0, 4, 1, 2, 1, 0, 3, 4, 1, 3, 0, 4, 2, 2, 4, 0, 1, 3, 2, 4, 3, 1, 0]
-# ptime_data = [12, 94, 92, 91, 7, 19, 11, 66, 21, 87, 14, 75, 13, 16, 20, 95, 66, 7, 7, 77, 45, 6, 89, 15, 34, 77, 20, 76, 88, 53, 74, 88, 52, 27, 9, 88, 69, 62, 98, 52, 61, 9, 62, 52, 90, 54, 5, 59, 15, 88]
+machine_data = [0, 2, 3, 4, 1, 1, 3, 4, 2, 0, 1, 0, 3, 4, 2, 2, 4, 0, 3, 1, 1, 3, 4, 0, 2, 3, 2, 0, 4, 1, 2, 1, 0, 3, 4, 1, 3, 0, 4, 2, 2, 4, 0, 1, 3, 2, 4, 3, 1, 0]
+ptime_data = [12, 94, 92, 91, 7, 19, 11, 66, 21, 87, 14, 75, 13, 16, 20, 95, 66, 7, 7, 77, 45, 6, 89, 15, 34, 77, 20, 76, 88, 53, 74, 88, 52, 27, 9, 88, 69, 62, 98, 52, 61, 9, 62, 52, 90, 54, 5, 59, 15, 88]
 
 # LAWRENCE la05 10*5
 # machine_data = [1, 0, 4, 2, 3, 4, 3, 0, 2, 1, 1, 3, 2, 0, 4, 0, 3, 4, 1, 2, 4, 2, 3, 1, 0, 3, 0, 4, 1, 2, 0, 3, 1, 4, 2, 4, 2, 3, 1, 0, 2, 3, 1, 0, 4, 2, 3, 0, 4, 1]
@@ -83,16 +84,17 @@ ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 def get_file(best_chromosome, processing_time):
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    filename = f'la05{timestamp}.txt'
+    filename = f'la04{timestamp}.txt'             # CHANGE FILE NAME
     
-    directory = 'E:\Python\JobShopGA\Results\\la05'
+    directory = 'E:\Python\JobShopGA\Results\la04'        # CHANGE SAVING DIRECTORY
     
     filepath = os.path.join(directory, filename)
+    
     
     with open(filepath, 'w') as file:
         file.write(f"Genetic Algorithm Specifications\n")
         file.write("------------------------\n")
-        file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}\n')
+        file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}, pswap = {pswap}, pinv = {pinv}\n')
         file.write(f'Processing time = {processing_time}\n')
         file.write(f'best Cmax = {best_chromosome.fitness}\n')
         
@@ -626,9 +628,40 @@ def SPT_heuristic(operation_data):
         operation_index_list.extend([t[0] for t in tlist])
 
     return operation_index_list
+
+def LPT_heuristic(operation_data):
+    operation_index_list = []
+    n = len(operation_data[0])  # Number of operations
+    m = len(operation_data)     # Number of jobs
+
+    for j in range(n):
+        tlist = [(i, operation_data[i][j]) for i in range(m)]
+        tlist.sort(key=lambda x: x[1][1], reverse=True)  # Sort based on processing time
+        operation_index_list.extend([t[0] for t in tlist])
+        
+    return operation_index_list
+
+def srt_heuristic(operation_data):
+    rem_time = 0
+    job_rem_time = []
+    operation_index_list = []
+    
+    for i in range(m):
+        job_rem_time = []
+        for job in operation_data:
+            rem_time = 0
+            tjob = job[i:]
+            for operation in tjob:
+                rem_time += operation[1]
+            job_rem_time.append(rem_time)
+        sorted_indices = sorted(range(len(job_rem_time)), key=lambda x: job_rem_time[x])
+        operation_index_list.extend(sorted_indices)
+    
+        
+    return operation_index_list
         
 
-def decode_operations_to_schedule(operation_index, num_jobs=3):
+def decode_operations_to_schedule(operation_index, num_jobs=n):
     n = len(operation_index)
     possible_indices = [[(num_jobs * j + op) for j in range(n // num_jobs + 1)] for op in operation_index]
     ranked_list = [0] * n
@@ -657,20 +690,62 @@ def decode_operations_to_schedule(operation_index, num_jobs=3):
     return ranked_list, random_numbers
 
 def generate_population_with_heuristic(operation_data):
-    p = N//2
+    # p = N//2
     
+    # GENERATE WITH SPT AND RANDOM
+    # population = []
+    # for i in range(p):
+    #     num = [round(random.uniform(0,m*n), 2) for _ in range(n*m)]
+    #     population.append(process_chromosome(num))
+    
+    # for _ in range(N - p):
+    #     spt = SPT_heuristic(operation_data)
+    #     ranked, code = decode_operations_to_schedule(spt)
+    #     population.append(process_chromosome(code))
+        
+    # return population
+    
+    
+    # GENERATE WITH SPT, LPT AND RANDOM
     population = []
-    for _ in range(p):
-        num = [round(random.uniform(0,m*n), 2)]
-        population.append(process_chromosome(num))
+    number = n*m
+    # twenty_percent = int(number * 0.2)
+    # for i in range(twenty_percent):
+    #     spt = SPT_heuristic(operation_data)
+    #     ranked, code = decode_operations_to_schedule(spt)
+    #     population.append(process_chromosome(code))
+        
+    # for i in range(twenty_percent):
+    #     lpt = LPT_heuristic(operation_data)
+    #     ranked, code = decode_operations_to_schedule(lpt)
+    #     population.append(process_chromosome(code))
+        
+    # for i in range(N - twenty_percent + twenty_percent):
+    #     num = [round(random.uniform(0,m*n), 2) for _ in range(n*m)]
+    #     population.append(process_chromosome(num))
+        
+    # random.shuffle(population)
     
-    for _ in range(N - p):
-        spt = SPT_heuristic(operation_data)
-        code = decode_operations_to_schedule(spt)
+    for i in range(2):
+        srt_op_seq = srt_heuristic(operation_data)
+        ranked, code = decode_operations_to_schedule(srt_op_seq)
+        population.append(process_chromosome(code))
+    
+    for i in range(2):
+        spt_op_seq = SPT_heuristic(operation_data)
+        ranked, code = decode_operations_to_schedule(spt_op_seq)
         population.append(process_chromosome(code))
         
-    return population
+    for i in range(2):
+        lpt_op_seq = LPT_heuristic(operation_data)
+        ranked, code = decode_operations_to_schedule(lpt_op_seq)
+        population.append(process_chromosome(code))
     
+    for i in range(N - 6):
+        num = [round(random.uniform(0,m*n), 2) for _ in range(n*m)]
+        population.append(process_chromosome(num))
+        
+    return population
 
 
 def main1():
@@ -929,12 +1004,14 @@ def main4():
     ypoints = []
     
     # generate initial population
-    initial_population = generate_population(N)
-    population = []
-    for encoded_list in initial_population:
-        # print(f'generated list: {encoded_list}')
-        chromosome = process_chromosome(encoded_list)
-        population.append(chromosome)
+    # initial_population = generate_population(N)
+    # population = []
+    # for encoded_list in initial_population:
+    #     # print(f'generated list: {encoded_list}')
+    #     chromosome = process_chromosome(encoded_list)
+    #     population.append(chromosome)
+        
+    population = generate_population_with_heuristic(operation_data)
         
     sorted_population = sorted(population, key = lambda  x : x.fitness )
         
@@ -1015,7 +1092,7 @@ def main4():
     processing_time = end_time - start_time
     
     
-    # get_file(best_chromosome, processing_time)
+    get_file(best_chromosome, processing_time)
     
     
     # print(f'best Cmax = {ypoints[N-1]}')
@@ -1025,13 +1102,21 @@ def main4():
     print(f'ranked list : {best_chromosome.ranked_list}\n operation_index :{best_chromosome.operation_index_list},\n operation object{best_chromosome.operation_schedule}\n')
     print(f'machine sequence: {best_chromosome.machine_sequence}\n ptime sequence: {best_chromosome.ptime_sequence}\n Cmax: {best_chromosome.Cmax}')
 
-    
+
+    # CHANGE DIRECTORY FOR SAVING FIGURE
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = f'E:\\Python\\JobShopGA\\Results\\la04\\ganttcharr{timestamp}.png'
     PlotGanttChar(best_chromosome)
+    plt.savefig(filename)
     
-    plt.show()
+    # plt.show()
     
     print('\n')
-        
+
+def run_tests():
+    runs = 10
+    for _ in range(runs):
+        main4()
         
 if __name__ == '__main__':
-    main4()
+    run_tests()

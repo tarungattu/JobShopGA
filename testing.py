@@ -442,6 +442,39 @@ def generate_population_with_heuristic(operation_data):
         
     return population
 
+def LPT_heuristic(operation_data):
+    operation_index_list = []
+    n = len(operation_data[0])  # Number of operations
+    m = len(operation_data)     # Number of jobs
+
+    for j in range(n):
+        tlist = [(i, operation_data[i][j]) for i in range(m)]
+        tlist.sort(key=lambda x: x[1][1], reverse=True)  # Sort based on processing time
+        operation_index_list.extend([t[0] for t in tlist])
+        
+    return operation_index_list
+
+def srt_heuristic(operation_data):
+    rem_time = 0
+    job_rem_time = []
+    operation_index_list = []
+    
+    for i in range(m):
+        job_rem_time = []
+        for job in operation_data:
+            rem_time = 0
+            tjob = job[i:]
+            for operation in tjob:
+                rem_time += operation[1]
+            job_rem_time.append(rem_time)
+        sorted_indices = sorted(range(len(job_rem_time)), key=lambda x: job_rem_time[x])
+        operation_index_list.extend(sorted_indices)
+    
+        
+    return operation_index_list
+
+
+
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
 
@@ -517,7 +550,8 @@ def main2():
     
     population.append(chromosome_test2)
     
-    operation_seq_index = SPT_heuristic(operation_data)
+    operation_seq_index = srt_heuristic(operation_data)
+    print(operation_seq_index)
     print('spt operation sequence:', operation_seq_index)
     ranked_list, random_numbers_list = decode_operations_to_schedule(operation_seq_index)
     print('decoded ranked_list', ranked_list)
