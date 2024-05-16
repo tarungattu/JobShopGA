@@ -3,6 +3,8 @@ class Chromosome:
         self.encoded_list = encoded_list
         self.ranked_list = []
         self.operation_index_list = []
+        self.job_list = []
+        self.amr_list = []
         self.operation_schedule = []
         self.machine_sequence = []
         self.machine_list = []
