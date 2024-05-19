@@ -305,6 +305,25 @@ def get_Cmax(machines):
         
     return max(runtimes)
 
+def remove_duplicates(numbers):
+    seen = set()
+    modified_numbers = []
+    
+    for num in numbers:
+        # Check if the number is already in the set
+        if num in seen:
+            # Modify the number slightly
+            modified_num = num + 0.01
+            # Keep modifying until it's unique
+            while modified_num in seen:
+                modified_num += 0.01
+            modified_numbers.append(modified_num)
+        else:
+            modified_numbers.append(num)
+            seen.add(num)
+    
+    return modified_numbers
+
 
 def process_chromosome(chromosome):
     
@@ -313,6 +332,8 @@ def process_chromosome(chromosome):
     machines = [Machine(number) for number in range(m)]
     amrs = [AMR(number) for number in range(num_amrs)]
     assign_operations(jobs, operation_data)
+    
+    chromosome = remove_duplicates(chromosome)
     
     ranked_list = induv_integer_list(chromosome)
     operation_index_list = induv_getJobindex(ranked_list)
