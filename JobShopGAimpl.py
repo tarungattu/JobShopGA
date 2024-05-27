@@ -11,10 +11,11 @@ import time
 import os
 from datetime import datetime
 from amr import AMR
+import json
 
-m = 6
-n = 6
-num_amrs = 4
+m = 4
+n = 3
+num_amrs = 2
 N = 100
 pc = 0.8
 pm = 0.05
@@ -25,8 +26,8 @@ activate_termination = 0
 T = 200
 
 # Pinedo book first example
-# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 #Pinedo Book second example
 # machine_data = [0,1,2,3, 0,1,3,2, 2,0,1,3]
@@ -58,8 +59,8 @@ T = 200
 # machine_data = [3, 11, 14, 1, 10, 2, 4, 7, 0, 12, 5, 9, 6, 13, 8, 5, 0, 3, 8, 4, 1, 12, 14, 6, 7, 10, 2, 9, 13, 11, 2, 3, 14, 0, 9, 12, 5, 4, 7, 10, 8, 11, 13, 1, 6, 8, 10, 1, 13, 3, 4, 14, 9, 2, 5, 11, 7, 0, 6, 12, 14, 8, 1, 2, 10, 9, 12, 4, 6, 5, 0, 13, 3, 11, 7, 3, 10, 1, 5, 6, 0, 8, 7, 11, 13, 2, 14, 12, 9, 4, 2, 10, 1, 12, 8, 0, 7, 6, 14, 13, 4, 3, 5, 9, 11, 1, 0, 2, 4, 7, 13, 11, 3, 12, 5, 6, 14, 9, 8, 10, 4, 5, 9, 10, 7, 6, 2, 1, 12, 3, 13, 0, 8, 14, 11, 1, 4, 3, 10, 14, 0, 6, 13, 11, 8, 5, 12, 7, 9, 2, 3, 10, 1, 0, 9, 8, 14, 6, 4, 7, 2, 12, 5, 11, 13, 2, 7, 6, 8, 3, 5, 14, 4, 1, 0, 9, 10, 13, 11, 12, 0, 7, 14, 8, 12, 10, 9, 3, 6, 1, 4, 2, 11, 13, 5, 12, 3, 9, 4, 1, 0, 10, 6, 5, 2, 14, 13, 7, 8, 11, 3, 14, 6, 5, 13, 9, 1, 0, 12, 7, 2, 4, 10, 8, 11, 5, 14, 6, 12, 8, 2, 4, 9, 11, 13, 3, 1, 7, 0, 10, 3, 7, 10, 14, 0, 8, 1, 11, 5, 13, 4, 12, 6, 9, 2, 10, 8, 2, 11, 13, 6, 14, 3, 9, 7, 4, 5, 12, 0, 1, 3, 2, 12, 13, 1, 6, 14, 5, 4, 8, 9, 11, 0, 10, 7, 11, 14, 5, 6, 10, 9, 13, 1, 4, 8, 0, 3, 12, 2, 7]
 
 # FISHER THOMPSON ft06 6*6 
-ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
-machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
+# ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
+# machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
 
 
 # LAWRENCE la01 10*5
@@ -978,6 +979,46 @@ def generate_population_with_heuristic(operation_data, amr_assignments):
         
     return population
 
+def get_sequences_in_amr(amrs):
+    amr_machines = []
+    amr_ptimes = []
+    glob_amr_machine = []
+    glob_amr_ptime = []
+    for amr in amrs:
+        for j in amr.job_objects:
+            for o in j.operations:
+                amr_machines.append(o.machine)
+                amr_ptimes.append(o.Pj)
+            amr_machines.extend([-2, -1])
+        amr.machine_sequence = amr_machines
+        amr.ptime_sequence = amr_ptimes
+        glob_amr_machine.append(amr_machines)
+        glob_amr_ptime.append(amr_ptimes)
+        amr_machines = []
+        amr_ptimes = []
+        
+    return glob_amr_machine, glob_amr_ptime
+
+def create_amr_json(machine_sequences, ptime_sequences, output_file):
+    # Initialize the structure
+    amr_data = {
+        "amr_list": [
+            {
+                "amr_no": 1,
+                "machine_sequence": machine_sequences[0],
+                "ptime_sequence": ptime_sequences[0]
+            },
+            {
+                "amr_no": 2,
+                "machine_sequence": machine_sequences[1],
+                "ptime_sequence": ptime_sequences[1]
+            }
+        ]
+    }
+
+    # Write the data to a JSON file
+    with open(output_file, 'w') as json_file:
+        json.dump(amr_data, json_file, indent=4)
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -1360,6 +1401,10 @@ def main4():
     PlotGanttChar_with_amr(best_chromosome)
     # plt.savefig(filename)
     
+    machine_seq_amrs, ptime_seq_amrs = get_sequences_in_amr(best_chromosome.amr_list)
+    print(machine_seq_amrs,'\n',ptime_seq_amrs)   
+    create_amr_json(machine_seq_amrs, ptime_seq_amrs, 'amr_data.json')
+
     plt.show()
     
     print('\n')

@@ -9,6 +9,7 @@ from operation import Operation
 from chromosome import Chromosome
 from scipy.stats import rankdata
 from amr import AMR
+import json
 
 m = 4
 n = 3
@@ -653,6 +654,38 @@ def srt_heuristic(operation_data):
     return operation_index_list
 
 
+def parse_json(json_file):
+    with open(json_file, 'r') as file:
+        data = json.load(file)
+        
+    machine_sequences = []
+    ptime_sequences = []
+    
+    new_machine_sequences = []
+    new_ptime_sequences = []
+    
+        
+    for amr in data['amr_list']:
+        machine_sequences.append(amr['machine_sequence'])
+        ptime_sequences.append(amr['ptime_sequence'])
+        
+    for machines, ptimes in zip(machine_sequences, ptime_sequences):
+        new_machines = []
+        new_ptimes = []
+        for machine, ptime in zip(machines, ptimes):
+            if ptime != 0:
+                new_machines.append(machine)
+                new_ptimes.append(ptime)
+        new_machine_sequences.append(new_machines)
+        new_ptime_sequences.append(new_ptimes)
+    
+    print(machine_sequences, ptime_sequences)
+    print(new_machine_sequences, new_ptime_sequences)
+    amr1_sequence = new_machine_sequences[0]
+    return amr1_sequence
+    
+        
+
 
 def main1():
     operation_data = create_operation_data(machine_data,ptime_data, m)
@@ -742,8 +775,8 @@ def main2():
     # for machine in chromosome_test3.machine_list:
     #     print(f'machine no: {machine.machine_id}, Cj :{machine.finish_operation_time}')
     
-    PlotGanttChar_with_amr(chromosome_test1)
-    PlotGanttChar_with_amr(chromosome_test2)
+    # PlotGanttChar_with_amr(chromosome_test1)
+    # PlotGanttChar_with_amr(chromosome_test2)
     # PlotGanttChar(chromosome_test2)
     plt.show()
     
@@ -807,6 +840,9 @@ def main2():
     # print('offsprings are:')
     # for chromosome in offspring_list:
     #     print(chromosome.encoded_list)
+    
+    amr1_sequence = parse_json('amr_data.json')
+    print(f'amr1 sequence = {amr1_sequence}')
     
         
 if __name__ == '__main__':

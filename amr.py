@@ -7,3 +7,5 @@ class AMR:
         self.job_objects = []
         self.job_start_time = 0
         self.job_completion_time = 0
+        self.machine_sequence = []
+        self.ptime_sequence  = []
