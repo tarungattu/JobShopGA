@@ -13,9 +13,16 @@ import json
 
 m = 4
 n = 3
-num_amrs = 3
+num_amrs = 2
 N = 2
 pc = 0.5
+
+distance_matrix = np.array([
+    [0,2,4,4],
+    [2,0,4,4],
+    [4,4,0,2],
+    [4,4,2,0]
+])
 
 
 
@@ -178,18 +185,18 @@ def assign_data_to_operations(jobs, operation_data):
             operation.Pj = sublist[i][1]
             
 def assign_amrs_to_jobs(jobs, amrs, operation_index_list):
-    t_operations = set(operation_index_list)
-    for num in t_operations:
-        jobs[num].amr_number = random.randint(0, num_amrs - 1)
-        amrs[jobs[num].amr_number].assigned_jobs.append(jobs[num].job_number)
+    # t_operations = set(operation_index_list)
+    # for num in t_operations:
+    #     jobs[num].amr_number = random.randint(0, num_amrs - 1)
+    #     amrs[jobs[num].amr_number].assigned_jobs.append(jobs[num].job_number)
     
     # TEST VALUES
-    # jobs[0].amr_number = 0
-    # jobs[1].amr_number = 0
-    # jobs[2].amr_number = 1
+    jobs[0].amr_number = 0
+    jobs[1].amr_number = 1
+    jobs[2].amr_number = 0
     
-    # amrs[0].assigned_jobs = [0,1]
-    # amrs[1].assigned_jobs = [2]
+    amrs[0].assigned_jobs = [2,0]
+    amrs[1].assigned_jobs = [1]
             
             
 def get_machine_sequence(operation_schedule):
@@ -228,12 +235,15 @@ def calculate_Cj(operation_schedule, machines, jobs):
                     machines[operation.machine].finish_operation_time = operation.Cj
                 # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].
 
+'''
+Checkpoint: when a job is completed, the amr should start the next job after considering travel time of travelling to the unloading dock, unloading, then go to loading dock, load job and then travel to the first machine of next job
+'''
 
 def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
     t_op = operation_schedule
     skipped = []
     while t_op != []:
-        print('running')
+        # print('running')
         for operation in t_op:
             # CHECK IF AMR IS ASSIGNED TO A JOB, ONLY ASSIGN IF THE OPERATION NUMBER IS ZERO
             if amrs[jobs[operation.job_number].amr_number].current_job == None and operation.operation_number == 0:
@@ -248,7 +258,15 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
             if operation.job_number == amrs[jobs[operation.job_number].amr_number].current_job:
                 
                 if operation.operation_number == 0:
-                    operation.start_time = machines[operation.machine].finish_operation_time
+                    if amrs[jobs[operation.job_number].amr_number].completed_jobs == []:
+                        operation.start_time = machines[operation.machine].finish_operation_time
+                    else:
+                        # MAKE SURE THE PREVIOUS JOBS TRAVEL TIME SHOULD BE GIVEN TO NEXT JOB IF M'TH JOB IS HAVING PJ = 0
+                        i = 0
+                        while jobs[amrs[jobs[operation.job_number].amr_number].completed_jobs[-1]].operations[m-i-1].Pj == 0:
+                            i+=1   
+                        operation.start_time = machines[operation.machine].finish_operation_time + jobs[amrs[jobs[operation.job_number].amr_number].completed_jobs[-1]].operations[m-i-1].travel_time
+                        
                     jobs[operation.job_number].job_start_time = operation.start_time # SET JOB START TIME
                     operation.Cj = operation.start_time + operation.Pj
                     machines[operation.machine].finish_operation_time = operation.Cj
@@ -263,7 +281,7 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
                         # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                         
                     else:
-                        operation.start_time = jobs[operation.job_number].operations[operation.operation_number - 1].Cj
+                        operation.start_time = jobs[operation.job_number].operations[operation.operation_number - 1].Cj + jobs[operation.job_number].operations[operation.operation_number - 1].travel_time
                         operation.Cj = operation.start_time + operation.Pj
                         if operation.Pj != 0:
                             machines[operation.machine].finish_operation_time = operation.Cj
@@ -283,6 +301,7 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
                         # IF FINAL JOB PJ IS ZERO TAKE PREV COMPLETED TIME
                         if operation.Pj != 0:
                             amrs[jobs[operation.job_number].amr_number].job_completion_time = operation.Cj
+                            jobs[operation.job_number].job_completion_time = amrs[jobs[operation.job_number].amr_number].job_completion_time
                         else:
                             i = 0
                             while jobs[operation.job_number].operations[operation.operation_number - i].Pj == 0:
@@ -293,7 +312,6 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
         t_op = skipped
         skipped = []
     # eof while
-                
 
 def assign_machine_operationlist(machines, operation_schedule):
     for operation in operation_schedule:
@@ -325,6 +343,11 @@ def remove_duplicates(numbers):
     
     return modified_numbers
 
+def get_travel_time(jobs, amrs, distance_matrix):
+    for job in jobs:
+        for operation in job.operations:
+            operation.travel_time = operation.calculate_travel_time(amrs, jobs, distance_matrix)
+
 
 def process_chromosome(chromosome):
     
@@ -333,6 +356,7 @@ def process_chromosome(chromosome):
     machines = [Machine(number) for number in range(m)]
     amrs = [AMR(number) for number in range(num_amrs)]
     assign_operations(jobs, operation_data)
+    
     
     chromosome = remove_duplicates(chromosome)
     
@@ -354,6 +378,7 @@ def process_chromosome(chromosome):
     # get the sequence of processing times
     ptime_sequence = get_processing_times(operation_schedule)
     
+    get_travel_time(jobs, amrs, distance_matrix)
     # calculate_Cj(operation_schedule, machines, jobs)
     calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs)
     assign_machine_operationlist(machines, operation_schedule)
@@ -412,9 +437,6 @@ def PlotGanttChar (chromosome):
                 ax.text((ST + (j.job_number/2-0.3)), (i+0.03), '{}'.format(j.job_number), fontsize=18)
                 
 def PlotGanttChar_with_amr(chromosome):
-     # Constants
-    m = 4  # number of machines (example value)
-    n = 3  # number of jobs (example value)
 
     # Get the makespan (Cmax) from the chromosome
     Cmax = chromosome.Cmax
@@ -433,7 +455,7 @@ def PlotGanttChar_with_amr(chromosome):
     ax.tick_params(axis='x', labelcolor='red', labelsize=16)
     ax.grid(True)
 
-    tmpTitle = 'Job Shop Scheduling (m={:02d}; n={:03d}; Cmax={:04d})'.format(m, n, Cmax)
+    tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; Cmax={Cmax}; AMRs:{num_amrs})'
     ax.set_title(tmpTitle, size=20, color='blue')
 
     colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
@@ -445,6 +467,8 @@ def PlotGanttChar_with_amr(chromosome):
             ST = j.start_time
             if j.Pj != 0:
                 ax.broken_barh([(ST, j.Pj)], (-0.3 + i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
+                ax.broken_barh([(j.Cj, int(j.travel_time))], (-0.3 + i, 0.6), facecolor='black', linewidth=1, edgecolor='black')
+                
                 ax.text(ST + (j.Pj / 2 - 0.3), i + 0.03, '{}'.format(j.job_number), fontsize=18)
     
     
@@ -479,6 +503,72 @@ def PlotGanttChar_with_amr(chromosome):
     plt.tight_layout()
     plt.show()
 
+def PlotGanttChar_with_amr_without_travel_mark(chromosome):
+
+    # Get the makespan (Cmax) from the chromosome
+    Cmax = chromosome.Cmax
+
+    # Figure and set of subplots
+    fig, axs = plt.subplots(2, 1, figsize=(10, 8), gridspec_kw={'height_ratios': [8, 1]})
+    
+    # Bottom Gantt chart (main)
+    ax = axs[0]
+    ax.set_ylabel('Machine', fontweight='bold', loc='top', color='magenta', fontsize=16)
+    ax.set_ylim(-0.5, m - 0.5)
+    ax.set_yticks(range(m), minor=False)
+    ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
+    
+    ax.set_xlim(0, Cmax + 2)
+    ax.tick_params(axis='x', labelcolor='red', labelsize=16)
+    ax.grid(True)
+
+    tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; Cmax={Cmax}; AMRs:{num_amrs})'
+    ax.set_title(tmpTitle, size=20, color='blue')
+
+    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
+
+    for i in range(m):
+        joblen = len(chromosome.machine_list[i].operationlist)
+        for k in range(joblen):
+            j = chromosome.machine_list[i].operationlist[k]
+            ST = j.start_time
+            if j.Pj != 0:
+                ax.broken_barh([(ST, j.Pj)], (-0.3 + i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
+                # ax.broken_barh([(j.Cj, int(j.travel_time))], (-0.3 + i, 0.6), facecolor='black', linewidth=1, edgecolor='black')
+                
+                ax.text(ST + (j.Pj / 2 - 0.3), i + 0.03, '{}'.format(j.job_number), fontsize=18)
+    
+    
+    # Top Gantt chart with custom y-ticks
+    top_ax = axs[1]
+    top_ax.set_ylabel('AMRs', fontweight='bold', loc='top', color='magenta', fontsize=16)
+    top_ax.set_xlabel('Time', fontweight='bold', loc='right', color='red', fontsize=16)
+    top_ax.set_ylim(-0.5, num_amrs - 0.5)
+    top_ax.set_yticks(range(num_amrs), minor=False)
+    top_ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
+    top_ax.set_xlim(0, Cmax + 2)
+    top_ax.tick_params(axis='x', labelcolor='red', labelsize=16)
+    top_ax.grid(True)
+
+    # Example data for the top Gantt chart
+    top_colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
+    # top_ax.broken_barh([(5, 10)], (-0.3, 0.6), facecolor=top_colors[0], linewidth=1, edgecolor='black')
+    # top_ax.text(10, 0.03, '0', fontsize=18)
+    # top_ax.broken_barh([(15, 20)], (0.7, 0.6), facecolor=top_colors[1], linewidth=1, edgecolor='black')
+    # top_ax.text(25, 1.03, '1', fontsize=18)
+    
+    for i in range(num_amrs):
+        joblen = len(chromosome.amr_list[i].job_objects)
+        for k in range(joblen):
+            j = chromosome.amr_list[i].job_objects[k]
+            ST = j.job_start_time
+            duration = j.job_completion_time - j.job_start_time
+            if duration != 0:
+                top_ax.broken_barh([(ST, duration)], (-0.3 + i, 0.6), facecolor=top_colors[j.job_number], linewidth=1, edgecolor='black')
+                top_ax.text(ST + (duration) / 2 , i - 0.2, '{}'.format(j.job_number), fontsize=14, ha = 'center')
+
+    plt.tight_layout()
+    plt.show()
 
 
 def tournament(population):
@@ -752,15 +842,19 @@ def main2():
     #     chromosome = process_chromosome(encoded_list)
     #     population.append(chromosome)
     
-    encoded_list1 = [7.45,	10.69,	9.73,	1.31,	1.67,	1.58,	7.29,	2.77,	8.91,	7.35,	3.46,	7.47]
-    chromosome_test1 = process_chromosome(encoded_list1)
-    print(chromosome_test1.operation_index_list)
-    population.append(chromosome_test1)
+    # encoded_list1 = [7.45,	10.69,	9.73,	1.31,	1.67,	1.58,	7.29,	2.77,	8.91,	7.35,	3.46,	7.47]
+    # chromosome_test1 = process_chromosome(encoded_list1)
+    # print(chromosome_test1.operation_index_list)
+    # population.append(chromosome_test1)
     
-    encoded_list2 = [4.74, 8.05, 10.48, 7.19, 6.05, 0.56, 0.04, 3.82, 1.37, 3.95, 1.46, 5.38]
-    chromosome_test2 = process_chromosome(encoded_list2)
-    print(chromosome_test2.operation_index_list)
-    population.append(chromosome_test2)
+    # encoded_list2 = [4.74, 8.05, 10.48, 7.19, 6.05, 0.56, 0.04, 3.82, 1.37, 3.95, 1.46, 5.38]
+    # chromosome_test2 = process_chromosome(encoded_list2)
+    # print(chromosome_test2.operation_index_list)
+    # population.append(chromosome_test2)
+    
+    encoded_list3 = [3, 2, 1, 6, 2.96, 5, 9, 7, 8, 10, 7.91, 11]
+    chromosome_test3 = process_chromosome(encoded_list3)
+    population.append(chromosome_test3)
     
     # operation_seq_index = srt_heuristic(operation_data)
     # print(operation_seq_index)
@@ -775,7 +869,8 @@ def main2():
     # for machine in chromosome_test3.machine_list:
     #     print(f'machine no: {machine.machine_id}, Cj :{machine.finish_operation_time}')
     
-    # PlotGanttChar_with_amr(chromosome_test1)
+    PlotGanttChar_with_amr(chromosome_test3)
+    # PlotGanttChar_with_amr_without_travel_mark(chromosome_test3)
     # PlotGanttChar_with_amr(chromosome_test2)
     # PlotGanttChar(chromosome_test2)
     plt.show()

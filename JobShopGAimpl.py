@@ -23,7 +23,7 @@ pswap = 0.05
 pinv = 0.05
 activate_termination = 0
 
-T = 200
+T = 100
 
 # Pinedo book first example
 machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -83,7 +83,22 @@ ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 # machine_data = [1, 0, 4, 2, 3, 4, 3, 0, 2, 1, 1, 3, 2, 0, 4, 0, 3, 4, 1, 2, 4, 2, 3, 1, 0, 3, 0, 4, 1, 2, 0, 3, 1, 4, 2, 4, 2, 3, 1, 0, 2, 3, 1, 0, 4, 2, 3, 0, 4, 1]
 # ptime_data = [72, 87, 95, 66, 60, 5, 35, 48, 39, 54, 46, 20, 21, 97, 55, 59, 19, 46, 34, 37, 23, 73, 25, 24, 28, 28, 45, 5, 78, 83, 53, 71, 37, 29, 12, 12, 87, 33, 55, 38, 49, 83, 40, 48, 7, 65, 17, 90, 27, 23]
 
+'''
+Distances between machines for Pinedo book first example
+'''
 
+# TEST MATRIX
+distance_matrix = np.array([
+    [0,2,4,4],
+    [2,0,4,4],
+    [4,4,0,2],
+    [4,4,2,0]
+])
+
+# def assign_travel_time(distance_matrix, jobs):
+#     for job in jobs:
+#         for operation in job.operation_list:
+            
 
 
 def get_file(best_chromosome, processing_time):
@@ -329,6 +344,10 @@ def calculate_Cj(operation_schedule, machines, jobs, machine_sequence, ptime_seq
                 # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                 
 
+'''
+Checkpoint: when a job is completed, the amr should start the next job after considering travel time of travelling to the unloading dock, unloading, then go to loading dock, load job and then travel to the first machine of next job
+'''
+
 def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
     t_op = operation_schedule
     skipped = []
@@ -348,7 +367,15 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
             if operation.job_number == amrs[jobs[operation.job_number].amr_number].current_job:
                 
                 if operation.operation_number == 0:
-                    operation.start_time = machines[operation.machine].finish_operation_time
+                    if amrs[jobs[operation.job_number].amr_number].completed_jobs == []:
+                        operation.start_time = machines[operation.machine].finish_operation_time
+                    else:
+                        # MAKE SURE THE PREVIOUS JOBS TRAVEL TIME SHOULD BE GIVEN TO NEXT JOB IF M'TH JOB IS HAVING PJ = 0
+                        i = 0
+                        while jobs[amrs[jobs[operation.job_number].amr_number].completed_jobs[-1]].operations[m-i-1].Pj == 0:
+                            i+=1   
+                        operation.start_time = machines[operation.machine].finish_operation_time + jobs[amrs[jobs[operation.job_number].amr_number].completed_jobs[-1]].operations[m-i-1].travel_time
+                        
                     jobs[operation.job_number].job_start_time = operation.start_time # SET JOB START TIME
                     operation.Cj = operation.start_time + operation.Pj
                     machines[operation.machine].finish_operation_time = operation.Cj
@@ -363,7 +390,7 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
                         # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                         
                     else:
-                        operation.start_time = jobs[operation.job_number].operations[operation.operation_number - 1].Cj
+                        operation.start_time = jobs[operation.job_number].operations[operation.operation_number - 1].Cj + jobs[operation.job_number].operations[operation.operation_number - 1].travel_time
                         operation.Cj = operation.start_time + operation.Pj
                         if operation.Pj != 0:
                             machines[operation.machine].finish_operation_time = operation.Cj
@@ -395,7 +422,6 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
         skipped = []
     # eof while
 
-
 def assign_machine_operationlist(machines, operation_schedule):
     for operation in operation_schedule:
         machines[operation.machine].operationlist.append(operation)
@@ -407,9 +433,6 @@ def get_Cmax(machines):
         
     return max(runtimes)
 
-'''
-AMR assignment is random each time a chromosome is generated, this is to be looked into
-'''
 
 # def process_chromosome(chromosome, amr_assignments):
     
@@ -463,7 +486,13 @@ def check_list_length(my_list):
         # print("List length is 12")
     except ValueError as e:
         print(f"Error: {e}")
-
+        
+# def get_travel_time(jobs, amrs, distance_matrix):
+    
+def get_travel_time(jobs, amrs, distance_matrix):
+    for job in jobs:
+        for operation in job.operations:
+            operation.travel_time = operation.calculate_travel_time(amrs, jobs, distance_matrix)
 
 def process_chromosome(chromosome, amr_assignments):
     
@@ -494,6 +523,9 @@ def process_chromosome(chromosome, amr_assignments):
     
     # get the sequence of processing times
     ptime_sequence = get_processing_times(operation_schedule)
+    
+    # SET TRAVEL TIMES FOR EACH JOB
+    get_travel_time(jobs, amrs, distance_matrix)
     
     # calculate_Cj(operation_schedule, machines, jobs)
     calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs)
@@ -574,7 +606,7 @@ def PlotGanttChar_with_amr(chromosome):
     ax.tick_params(axis='x', labelcolor='red', labelsize=16)
     ax.grid(True)
 
-    tmpTitle = 'Job Shop Scheduling (m={:02d}; n={:03d}; Cmax={:04d})'.format(m, n, Cmax)
+    tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; AMRs:{num_amrs}; Cmax={Cmax}; )'
     ax.set_title(tmpTitle, size=20, color='blue')
 
     colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
@@ -586,6 +618,8 @@ def PlotGanttChar_with_amr(chromosome):
             ST = j.start_time
             if j.Pj != 0:
                 ax.broken_barh([(ST, j.Pj)], (-0.3 + i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
+                ax.broken_barh([(j.Cj, j.travel_time)], (-0.3 + i, 0.6), facecolor='black', linewidth=1, edgecolor='black')
+                
                 ax.text(ST + (j.Pj / 2 - 0.3), i + 0.03, '{}'.format(j.job_number), fontsize=18)
     
     
@@ -1377,7 +1411,7 @@ def main4():
     
     
     xpoints = [x for x in range(1, t+ 1)]
-    plt.plot(xpoints, ypoints,  color= 'b')
+    # plt.plot(xpoints, ypoints,  color= 'b')
     
     # Record the end time
     end_time = time.time()
