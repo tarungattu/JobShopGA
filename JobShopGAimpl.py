@@ -88,12 +88,32 @@ Distances between machines for Pinedo book first example
 '''
 
 # TEST MATRIX
+# distance_matrix = np.array([
+#     [0,2,4,4],
+#     [2,0,4,4],
+#     [4,4,0,2],
+#     [4,4,2,0]
+# ])
+
+# NEW WAREHOUSE MATRIX
 distance_matrix = np.array([
-    [0,2,4,4],
-    [2,0,4,4],
-    [4,4,0,2],
-    [4,4,2,0]
+    [0, 5.16, 10.258, 10.258, 6.12, 9.258],
+    [5.16, 0, 10.258, 10.258, 6.12, 9.258],
+    [10.258, 10.258, 0, 5.16, 11.218, 6.86],
+    [10.258, 10.258, 5.16, 0, 11.218, 6.86],
+    [6.12, 6.12, 11.218, 11.218, 0, 10.22],
+    [9.258, 9.258, 6.86, 6.86, 10.22, 0]
 ])
+
+
+# distance_matrix = np.array([
+#     [0,0,0,0,0,0],
+#     [0,0,0,0,0,0],
+#     [0,0,0,0,0,0],
+#     [0,0,0,0,0,0],
+#     [0,0,0,0,0,0],
+#     [0,0,0,0,0,0]
+# ])
 
 # def assign_travel_time(distance_matrix, jobs):
 #     for job in jobs:
@@ -103,9 +123,9 @@ distance_matrix = np.array([
 
 def get_file(best_chromosome, processing_time):
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    filename = f'la05{timestamp}.txt'             # CHANGE FILE NAME
+    filename = f'la01{timestamp}.txt'             # CHANGE FILE NAME
     
-    directory = 'E:\Python\JobShopGA\Results\la05'        # CHANGE SAVING DIRECTORY
+    directory = 'E:\Python\JobShopGA\Results\withAMR\\la01'        # CHANGE SAVING DIRECTORY
     
     filepath = os.path.join(directory, filename)
     
@@ -113,7 +133,7 @@ def get_file(best_chromosome, processing_time):
     with open(filepath, 'w') as file:
         file.write(f"Genetic Algorithm Specifications\n")
         file.write("------------------------\n")
-        file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}, pswap = {pswap}, pinv = {pinv}\n')
+        file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}, pswap = {pswap}, pinv = {pinv}, num_amrs {num_amrs}\n')
         file.write(f'Processing time = {processing_time}\n')
         file.write(f'best Cmax = {best_chromosome.fitness}\n')
         
@@ -383,10 +403,11 @@ def calculate_Cj_with_amr(operation_schedule, machines, jobs, amrs):
                     
                     
                 else:
-                    if jobs[operation.job_number].operations[operation.operation_number - 1].Cj < machines[operation.machine].  finish_operation_time:
+                    # IF MACHINE RUN TIME IS LESSER THAN JOB COMPLETION TIME AND TRAVEL TIME FROM PREVIOUS LOCATION COMBINED.
+                    if jobs[operation.job_number].operations[operation.operation_number - 1].Cj + jobs[operation.job_number].operations[operation.operation_number - 1].travel_time < machines[operation.machine].  finish_operation_time:
                         operation.start_time = machines[operation.machine].finish_operation_time
                         operation.Cj = operation.start_time + operation.Pj
-                        machines[operation.machine].finish_operation_time = operation.Cj
+                        machines[operation.machine].finish_operation_time = operation.Cj 
                         # print(f'machine no: {machines[operation.machine].machine_id}, new finish time :{machines[operation.machine].finish_operation_time}')
                         
                     else:
@@ -606,7 +627,7 @@ def PlotGanttChar_with_amr(chromosome):
     ax.tick_params(axis='x', labelcolor='red', labelsize=16)
     ax.grid(True)
 
-    tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; AMRs:{num_amrs}; Cmax={Cmax}; )'
+    tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; AMRs:{num_amrs}; Cmax={round(Cmax, 2)}; )'
     ax.set_title(tmpTitle, size=20, color='blue')
 
     colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
@@ -1411,14 +1432,14 @@ def main4():
     
     
     xpoints = [x for x in range(1, t+ 1)]
-    # plt.plot(xpoints, ypoints,  color= 'b')
+    plt.plot(xpoints, ypoints,  color= 'b')
     
     # Record the end time
     end_time = time.time()
     processing_time = end_time - start_time
     
     
-    # get_file(best_chromosome, processing_time)
+    get_file(best_chromosome, processing_time)
     
     
     # print(f'best Cmax = {ypoints[N-1]}')

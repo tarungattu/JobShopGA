@@ -29,6 +29,8 @@ distance_matrix = np.array([
 machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
 ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
+# machine_data = [1,3,2,4, 4,1,2,3, 2,3,4,1 ]
+# ptime_data = [5,6,3,0, 8,8,3,6, 2,3,1,0]
 
 # print out necessary
 if len(sys.argv) > 1:
@@ -852,7 +854,7 @@ def main2():
     # print(chromosome_test2.operation_index_list)
     # population.append(chromosome_test2)
     
-    encoded_list3 = [3, 2, 1, 6, 2.96, 5, 9, 7, 8, 10, 7.91, 11]
+    encoded_list3 = [4.25,9.24,7.24,7.71,3.58,7.86,2.11,6.57,8.31,1.7]
     chromosome_test3 = process_chromosome(encoded_list3)
     population.append(chromosome_test3)
     
