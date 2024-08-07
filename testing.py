@@ -14,23 +14,45 @@ import json
 m = 4
 n = 3
 num_amrs = 2
-N = 2
-pc = 0.5
+N = 100
+pc = 0.8
+pm = 0.05
+pswap = 0.05
+pinv = 0.05
+T = 100
+
+activate_termination = 0
+enable_travel_time = 1
+display_convergence = 1
+display_schedule = 1
+
+# distance_matrix = np.array([
+#     [0,2,4,4],
+#     [2,0,4,4],
+#     [4,4,0,2],
+#     [4,4,2,0]
+# ])
 
 distance_matrix = np.array([
-    [0,2,4,4],
-    [2,0,4,4],
-    [4,4,0,2],
-    [4,4,2,0]
+    [0, 5, 10, 10, 6, 9],
+    [5, 0, 10, 10, 6, 9],
+    [10, 10, 0, 5, 11, 6],
+    [10, 10, 5, 0, 11, 6],
+    [6, 6, 11, 11, 0, 10],
+    [9, 9, 6, 6, 10, 0]
 ])
 
 
 
-machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 # machine_data = [1,3,2,4, 4,1,2,3, 2,3,4,1 ]
 # ptime_data = [5,6,3,0, 8,8,3,6, 2,3,1,0]
+
+# PAPER SAMPLE DATA
+machine_data = [0,2,1,3, 3,0,1,2, 1,2,3,0]
+ptime_data = [5,6,3,0, 8,8,3,6, 2,3,1,0]
 
 # print out necessary
 if len(sys.argv) > 1:
@@ -348,7 +370,7 @@ def remove_duplicates(numbers):
 def get_travel_time(jobs, amrs, distance_matrix):
     for job in jobs:
         for operation in job.operations:
-            operation.travel_time = operation.calculate_travel_time(amrs, jobs, distance_matrix)
+            operation.travel_time = operation.calculate_travel_time(amrs, jobs, distance_matrix, enable_travel_time)
 
 
 def process_chromosome(chromosome):
@@ -366,7 +388,7 @@ def process_chromosome(chromosome):
     operation_index_list = induv_getJobindex(ranked_list)
     
     # CASE 1
-    # operation_index_list = [1, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2, 1]
+    operation_index_list = [1,1,2,2,2,0,1,0,0,1, 0, 2]
     
     
     install_operations(jobs)
@@ -453,7 +475,10 @@ def PlotGanttChar_with_amr(chromosome):
     ax.set_yticks(range(m), minor=False)
     ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
     
-    ax.set_xlim(0, Cmax + 2)
+    # ax.set_xlim(0, 140)
+    ax.set_xticks([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110])
+    
+    ax.set_xlim(0, Cmax + 20)
     ax.tick_params(axis='x', labelcolor='red', labelsize=16)
     ax.grid(True)
 

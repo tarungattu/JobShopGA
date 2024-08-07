@@ -13,34 +13,39 @@ from datetime import datetime
 from amr import AMR
 import json
 
+import traceback
+import inspect
+from collections import Counter
+
 
 '''
 Parameters are HERE
 '''
-m = 4
-n = 3
-num_amrs = 2
-N = 100
-pc = 0.8
-pm = 0.05
-pswap = 0.05
-pinv = 0.05
-T = 100
+m = 5
+n = 10
+num_amrs = 4
+N = 350
+pc = 0.7
+pm = 0.5
+pswap = 0.5
+pinv = 0.5
+T = 450
 
-activate_termination = 0
+activate_termination = 1
 enable_travel_time = 1
-display_convergence = 1
-display_schedule = 1
+display_convergence = 0
+display_schedule = 0
+create_txt_file = 1
 
 
-
+converged_at = 0
 '''
 INSTANCE DATA FOR JOB SHOP
 '''
 
 # Pinedo book first example
-machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
-ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
+# machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
+# ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 
 #Pinedo Book second example
 # machine_data = [0,1,2,3, 0,1,3,2, 2,0,1,3]
@@ -74,10 +79,26 @@ ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 # ptime_data = [1, 3, 6, 7, 3, 6,  8, 5, 10, 10, 10, 4,  5, 4, 8, 9, 1, 7,  5, 5, 5, 3, 8, 9,  9, 3, 5, 4, 3, 1,  3, 3, 9, 10, 4, 1]
 # machine_data = [2, 0, 1, 3, 5, 4,  1, 2, 4, 5, 0, 3,  2, 3, 5, 0, 1, 4,  1, 0, 2, 3, 4, 5,  2, 1, 4, 5, 0, 3,  1, 3, 5, 0, 4, 2]
 
+# FISHER THOMPSON ft10 10 * 10
+# ptime_data = [
+#     29, 78, 9, 36, 49, 11, 62, 56, 44, 21,
+#     43, 90, 75, 11, 69, 28, 46, 46, 72, 30,
+#     91, 85, 39, 74, 90, 10, 12, 89, 45, 33,
+#     81, 95, 71, 99, 9, 52, 85, 98, 22, 43,
+#     14, 6, 22, 61, 26, 69, 21, 49, 72, 53,
+#     84, 2, 52, 95, 48, 72, 47, 65, 6, 25,
+#     46, 37, 61, 13, 32, 21, 32, 89, 30, 55,
+#     31, 86, 46, 74, 32, 88, 19, 48, 36, 79,
+#     76, 69, 76, 51, 85, 11, 40, 89, 26, 74,
+#     85, 13, 61, 7, 64, 76, 47, 52, 90, 45
+# ]
+
+# machine_data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2, 4, 9, 3, 1, 6, 5, 7, 8, 1, 0, 3, 2, 8, 5, 7, 6, 9, 4, 1, 2, 0, 4, 6, 8, 7, 3, 9, 5, 2, 0, 1, 5, 3, 4, 8, 7, 9, 6, 2, 1, 5, 3, 8, 9, 0, 6, 4, 7, 1, 0, 3, 2, 6, 5, 9, 8, 7, 4, 2, 0, 1, 5, 4, 6, 8, 9, 7, 3, 0, 1, 3, 5, 2, 9, 6, 7, 4, 8, 1, 0, 2, 6, 8, 9, 5, 3, 4, 7]
+
 
 # LAWRENCE la01 10*5
-# machine_data = [1, 0, 4, 3, 2,  0, 3, 4, 2, 1,  3, 4, 1, 2, 0,  1, 0, 4, 2, 3,  0, 3, 2, 1, 4,  1, 2, 4, 0, 3,  3, 4, 1, 2, 0,  2, 0, 1, 3, 4,  3, 1, 4, 0, 2,  4, 3, 2, 1, 0]
-# ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55, 79, 66, 77, 83, 34, 64, 19, 37, 54, 43, 79, 92, 62, 69, 77, 87, 87, 93, 38, 60, 41, 24, 83, 17, 49, 25, 44, 98, 77, 79, 43, 75, 96]
+machine_data = [1, 0, 4, 3, 2,  0, 3, 4, 2, 1,  3, 4, 1, 2, 0,  1, 0, 4, 2, 3,  0, 3, 2, 1, 4,  1, 2, 4, 0, 3,  3, 4, 1, 2, 0,  2, 0, 1, 3, 4,  3, 1, 4, 0, 2,  4, 3, 2, 1, 0]
+ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55, 79, 66, 77, 83, 34, 64, 19, 37, 54, 43, 79, 92, 62, 69, 77, 87, 87, 93, 38, 60, 41, 24, 83, 17, 49, 25, 44, 98, 77, 79, 43, 75, 96]
 
 # LAWRENCE la02 10*5
 # machine_data = [0, 3, 1, 4, 2, 4, 2, 0, 1, 3, 1, 2, 4, 0, 3, 2, 1, 4, 0, 3, 4, 0, 3, 2, 1, 1, 0, 4, 3, 2, 4, 1, 3, 0, 2, 1, 0, 2, 3, 4, 4, 0, 2, 1, 3, 4, 2, 1, 3, 0]
@@ -94,6 +115,9 @@ ptime_data = [10,8,4,0, 4,3,5,6, 4,7,3,0]
 # LAWRENCE la05 10*5
 # machine_data = [1, 0, 4, 2, 3, 4, 3, 0, 2, 1, 1, 3, 2, 0, 4, 0, 3, 4, 1, 2, 4, 2, 3, 1, 0, 3, 0, 4, 1, 2, 0, 3, 1, 4, 2, 4, 2, 3, 1, 0, 2, 3, 1, 0, 4, 2, 3, 0, 4, 1]
 # ptime_data = [72, 87, 95, 66, 60, 5, 35, 48, 39, 54, 46, 20, 21, 97, 55, 59, 19, 46, 34, 37, 23, 73, 25, 24, 28, 28, 45, 5, 78, 83, 53, 71, 37, 29, 12, 12, 87, 33, 55, 38, 49, 83, 40, 48, 7, 65, 17, 90, 27, 23]
+
+
+
 
 '''
 Distances between machines for Pinedo book first example
@@ -125,14 +149,26 @@ Distances between machines for Pinedo book first example
 #     [0,0,0,0,0,0]
 # ])
 
+
+
 if enable_travel_time:
+    # distance_matrix = np.array([
+    #     [0, 5.16, 10.258, 10.258, 6.12, 9.258],
+    #     [5.16, 0, 10.258, 10.258, 6.12, 9.258],
+    #     [10.258, 10.258, 0, 5.16, 11.218, 6.86],
+    #     [10.258, 10.258, 5.16, 0, 11.218, 6.86],
+    #     [6.12, 6.12, 11.218, 11.218, 0, 10.22],
+    #     [9.258, 9.258, 6.86, 6.86, 10.22, 0]
+    # ])
+    
+    # PAPER MATRIX
     distance_matrix = np.array([
-        [0, 5.16, 10.258, 10.258, 6.12, 9.258],
-        [5.16, 0, 10.258, 10.258, 6.12, 9.258],
-        [10.258, 10.258, 0, 5.16, 11.218, 6.86],
-        [10.258, 10.258, 5.16, 0, 11.218, 6.86],
-        [6.12, 6.12, 11.218, 11.218, 0, 10.22],
-        [9.258, 9.258, 6.86, 6.86, 10.22, 0]
+        [0, 5, 10, 10, 6, 9],
+        [5, 0, 10, 10, 6, 9],
+        [10, 10, 0, 5, 11, 6],
+        [10, 10, 5, 0, 11, 6],
+        [6, 6, 11, 11, 0, 10],
+        [9, 9, 6, 6, 10, 0]
     ])
 else:
     distance_matrix = np.array([
@@ -143,11 +179,13 @@ else:
 ])
 
 
-def get_file(best_chromosome, processing_time):
+def get_file(best_chromosome, processing_time, converged_at):
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     filename = f'la01{timestamp}.txt'             # CHANGE FILE NAME
+    if converged_at == 0:
+        converged_at = processing_time
     
-    directory = 'E:\Python\JobShopGA\Results\withAMR\\la01'        # CHANGE SAVING DIRECTORY
+    directory = 'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la01'        # CHANGE SAVING DIRECTORY
     
     filepath = os.path.join(directory, filename)
     
@@ -157,6 +195,7 @@ def get_file(best_chromosome, processing_time):
         file.write("------------------------\n")
         file.write(f'N = {N}, T = {T}, pc = {pc}, pm = {pm}, pswap = {pswap}, pinv = {pinv}, num_amrs {num_amrs}\n')
         file.write(f'Processing time = {processing_time}\n')
+        file.write(f'Converged at = {converged_at}\n')
         file.write(f'best Cmax = {best_chromosome.fitness}\n')
         
         file.write(f'random generated numbers:{best_chromosome.encoded_list}\n')
@@ -256,9 +295,11 @@ def remove_duplicates(numbers):
             while modified_num in seen:
                 modified_num += 0.01
             modified_numbers.append(modified_num)
+            seen.add(modified_num)
         else:
             modified_numbers.append(num)
             seen.add(num)
+        
     
     return modified_numbers
 
@@ -306,12 +347,16 @@ def schedule_operations(population, jobs):
 def indiv_schedule_operations(chromosome, jobs):
     operation_list = []
     explored = []
+    # print(chromosome)
+    # x = Counter(chromosome)
+    # for i in x.elements():
+    #     print( "% s : % s" % (i, x[i]), end ="\n")
     
     for i in range(len(chromosome)):
         explored.append(chromosome[i])
         numcount = explored.count(chromosome[i])
-        if numcount <= m:
-            operation_list.append(jobs[chromosome[i]].operations[numcount-1])  # changed chromosome[i] to chromosome[i]-1
+        # if numcount < m:
+        operation_list.append(jobs[chromosome[i]].operations[numcount-1])  # changed chromosome[i] to chromosome[i]-1
     return operation_list
             
 # gives each operation a job number of whihc job it is part of
@@ -319,7 +364,7 @@ def install_operations(jobs):
     for job in jobs:
         job.operations = [Operation(job.job_number) for i in range(m)]
 
-operation_data = create_operation_data(machine_data,ptime_data, m)
+# operation_data = create_operation_data(machine_data,ptime_data, m)
 
 def assign_data_to_operations(jobs, operation_data):
     for job,sublist in zip(jobs, operation_data):
@@ -527,12 +572,21 @@ def get_Cmax(machines):
 #     return chromosome
 
 def check_list_length(my_list):
+    
+    
     try:
         if len(my_list) != m*n:
             raise ValueError(f"List length is not {m*n}")
         # print("List length is 12")
     except ValueError as e:
         print(f"Error: {e}")
+        print(len(my_list))
+        tb = traceback.format_exc()
+        print("Traceback:\n", tb)
+        stack = inspect.stack()
+        print("Call stack:")
+        for frame in stack:
+            print(f"File: {frame.filename}, Line: {frame.lineno}, Function: {frame.function}")
         
 # def get_travel_time(jobs, amrs, distance_matrix):
     
@@ -555,8 +609,9 @@ def process_chromosome(chromosome, amr_assignments):
     assign_operations(jobs, operation_data)
     
     chromosome = remove_duplicates(chromosome)
-    
+    # print(chromosome)
     ranked_list = indiv_integer_list(chromosome)
+    # print(ranked_list)
     operation_index_list = indiv_getJobindex(ranked_list)
     
     # CASE 1
@@ -565,8 +620,9 @@ def process_chromosome(chromosome, amr_assignments):
     
     install_operations(jobs)
     assign_data_to_operations(jobs, operation_data)
-    check_list_length(operation_index_list)
-    operation_schedule = indiv_schedule_operations(operation_index_list, jobs)
+    # check_list_length(operation_index_list)
+    
+    operation_schedule = indiv_schedule_operations(operation_index_list, jobs)    # HERE IS THE MF ERROR
     check_list_length(operation_schedule)
     assign_amrs_to_jobs(jobs, amrs, amr_assignments)
     
@@ -708,15 +764,21 @@ def PlotGanttChar_with_amr(chromosome):
                 top_ax.text(ST + (duration) / 2 , i - 0.2, '{}'.format(j.job_number), fontsize=14, ha = 'center')
 
     plt.tight_layout()
-    plt.show()
+    
+    if create_txt_file:
+        # CHANGE DIRECTORY FOR SAVING FIGURE
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la01\\gantt{timestamp}'
+        plt.savefig(filename)
+    # plt.show()
     
 '''
 Types of Selection methods implemented:
 USED IN ALGORITHM:
 -two way tournament (tournament)
--three way tournament (three_way_tournament)
 
 NOT USED IN ALGORITHM
+-three way tournament (three_way_tournament)
 -stochastic universal sampling (stochastic_universal_sampling)
 '''
     
@@ -823,10 +885,10 @@ def single_point_crossover(chrom1, chrom2, amr_assignments):
     else:
         offspring1 = parent1[0:p] + parent2[p:]
         offspring2 = parent2[0:p] + parent1[p:]
-        checked_offsp1 = remove_duplicates(offspring1)
-        checked_offsp2 = remove_duplicates(offspring2)
-        chrom_out1 = process_chromosome(checked_offsp1, amr_assignments)
-        chrom_out2 = process_chromosome(checked_offsp2, amr_assignments)
+        # checked_offsp1 = remove_duplicates(offspring1)[:]
+        # checked_offsp2 = remove_duplicates(offspring2)[:]
+        chrom_out1 = process_chromosome(offspring1, amr_assignments)
+        chrom_out2 = process_chromosome(offspring2, amr_assignments)
     
     return chrom_out1, chrom_out2
 
@@ -846,10 +908,10 @@ def double_point_crossover(chrom1, chrom2, amr_assignments):
     child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
     child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
         
-    checked_offsp1 = remove_duplicates(child1)
-    checked_offsp2 = remove_duplicates(child2)
-    offspring1 = process_chromosome(checked_offsp1, amr_assignments)
-    offspring2 = process_chromosome(checked_offsp2, amr_assignments)
+    # checked_offsp1 = remove_duplicates(child1)[:]
+    # checked_offsp2 = remove_duplicates(child2)[:]
+    offspring1 = process_chromosome(child1, amr_assignments)
+    offspring2 = process_chromosome(child2, amr_assignments)
     
     return offspring1, offspring2
     
@@ -858,15 +920,15 @@ def double_point_crossover(chrom1, chrom2, amr_assignments):
 def single_bit_mutation(chromosome, amr_assignments):
     
     r = random.uniform(0,1)
-    code = chromosome.encoded_list
+    code = chromosome.encoded_list[:]
     
     if r > pm:
         return chromosome
     else:
         index = random.randint(0, len(code) - 1)
         code[index] = round(random.uniform(0,m*n), 2)
-        checked_code = remove_duplicates(code)
-        mutated_chromosome = process_chromosome(checked_code, amr_assignments)
+        # checked_code = remove_duplicates(code)[:]
+        mutated_chromosome = process_chromosome(code, amr_assignments)
     
     return mutated_chromosome
 
@@ -909,7 +971,7 @@ def swapping(chromosome, amr_assignments):
     if r > pswap:
         return chromosome
     
-    code = chromosome.encoded_list
+    code = chromosome.encoded_list[:]
     indexes = [num for num in range(len(code))]
     
     p = random.choice(indexes)
@@ -928,7 +990,7 @@ def inversion(chromosome, amr_assignments):
     if r > pinv:
         return chromosome
     
-    code = chromosome.encoded_list
+    code = chromosome.encoded_list[:]
     indexes = [num for num in range(len(code))]
     p = random.choice(indexes)
     q = random.choice(indexes)
@@ -1088,6 +1150,7 @@ def generate_population_with_heuristic(operation_data, amr_assignments):
             spt_op_seq = SPT_heuristic(operation_data)
             ranked, code = decode_operations_to_schedule(spt_op_seq)
             population.append(process_chromosome(code, amr_assignments))
+            
             
         for i in range(2):
             lpt_op_seq = LPT_heuristic(operation_data)
@@ -1299,7 +1362,7 @@ def main2():
                 i2 = random.choice(indices)
                 
             rchoice = random.uniform(0,1)
-            if rchoice > 0.5:
+            if rchoice < 1:
                 offspring1, offspring2 = single_point_crossover(winners_list[i1], winners_list[i2], new_amr_assignments)
             else:
                 # potential bug, skipping job
@@ -1317,13 +1380,23 @@ def main2():
             
             # perform swapping operation
             swap_chromosome = swapping(mutated_chromosome, new_amr_assignments)
+            
+            if swap_chromosome.Cmax < mutated_chromosome.Cmax:
+                enhanced_list.append(swap_chromosome)
+                inverted_chromosome = inversion(swap_chromosome, new_amr_assignments)
+                if inverted_chromosome.Cmax < swap_chromosome.Cmax:
+                    enhanced_list.append(inverted_chromosome)
+                else:
+                    enhanced_list.append(swap_chromosome)
+            else:    
+                enhanced_list.append(mutated_chromosome)
         
-            # perform inversion operation on chromosome
-            inverted_chromosome = inversion(swap_chromosome, new_amr_assignments)
+            # # perform inversion operation on chromosome
+            # inverted_chromosome = inversion(swap_chromosome, new_amr_assignments)
             
-            enhanced_list.append(inverted_chromosome)
+            # enhanced_list.append(mutated_chromosome)
             
-            # selection of survivors for next generation
+            # # selection of survivors for next generation
         
         survivors, best_in_gen = next_gen_selection(winners_list, enhanced_list)
         
@@ -1336,7 +1409,10 @@ def main2():
             stagnation += 1
             
         if stagnation > 10:
-            break
+            elapsed = time.time() - start_time
+            converged_at = elapsed
+        else:
+            converged_at = 0
         
         #CHECK IF AMR ASSIGNMENT IS BETTER OR WORSE
         
@@ -1365,8 +1441,8 @@ def main2():
     end_time = time.time()
     processing_time = end_time - start_time
     
-    
-    # get_file(best_chromosome, processing_time)
+    if create_txt_file:
+        get_file(best_chromosome, processing_time, converged_at)
     
     
     # print(f'best Cmax = {ypoints[N-1]}')
@@ -1377,18 +1453,18 @@ def main2():
     print(f'machine sequence: {best_chromosome.machine_sequence}\n ptime sequence: {best_chromosome.ptime_sequence}\n Cmax: {best_chromosome.Cmax}')
 
 
-    # CHANGE DIRECTORY FOR SAVING FIGURE
-    # timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    # filename = f'E:\\Python\\JobShopGA\\Results\\la05\\ganttcharr{timestamp}.png'
+
+    PlotGanttChar_with_amr(best_chromosome)
+    
+    
     if display_schedule:
-        PlotGanttChar_with_amr(best_chromosome)
-    # plt.savefig(filename)
+        plt.show()
     
     machine_seq_amrs, ptime_seq_amrs = get_sequences_in_amr(best_chromosome.amr_list)
     print(machine_seq_amrs,'\n',ptime_seq_amrs)   
     create_amr_json(machine_seq_amrs, ptime_seq_amrs, 'amr_data.json')
 
-    plt.show()
+    # plt.show()
     
     print('\n')
 
@@ -1396,10 +1472,10 @@ def main2():
 For testing with multiple runs
 '''
 def run_tests():
-    runs = 1
+    runs = 6
     for _ in range(runs):
         main2()
         
 
 if __name__ == '__main__':
-    main2()
+    run_tests()

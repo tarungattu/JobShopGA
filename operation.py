@@ -8,6 +8,9 @@ class Operation:
         self.Cj = 0
         self.travel_time = 0
         
+    def __str__(self):
+        return str(self.job_number)
+        
     def getCj(self):
         self.Cj = self.start_time + self.Pj
         
@@ -28,14 +31,14 @@ class Operation:
         if self.operation_number != len(jobs[self.job_number].operations) - 1:
             if jobs[self.job_number].operations[self.operation_number + 1].Pj == 0:
                 if en_tt:
-                    distance = 10         # ASSUMING COMMON DISTANCE BETWEEN LOADING DOCK, UNLOADING DOCK AND CURRENT MACHINE
+                    distance = distance_matrix[source][5] + distance_matrix[5][4]  
                 else:
                     distance = 0
                 return distance/velocity
                 
         if self.operation_number == len(jobs[self.job_number].operations) - 1:
             if en_tt:
-                distance = 10
+                distance = distance_matrix[source][5] + distance_matrix[5][4]
             else:
                 distance = 0
         else:
