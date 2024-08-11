@@ -3,15 +3,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 from scipy.stats import rankdata
+import time
+import os
+import json
+
 from job import Job
 from machine import Machine
 from operation import Operation
 from chromosome import Chromosome
-import time
-import os
 from datetime import datetime
 from amr import AMR
-import json
+
+import distances
+import benchmarks
 
 import traceback
 import inspect
@@ -21,28 +25,32 @@ import inspect
 '''
 Parameters are HERE
 '''
-m = 5
-n = 10
-num_amrs = 4
-N = 350
+m = 4
+n = 3
+num_amrs = 2
+N = 50
 pc = 0.7
 pm = 0.5
 pswap = 0.5
 pinv = 0.5
-T = 450
+T = 100
 
 activate_termination = 0
-enable_travel_time = 0
+enable_travel_time = 1
 display_convergence = 0
-display_schedule = 0
-create_txt_file = 1
+display_schedule = 1
+create_txt_file = 0
 update_json_file = 0
+runs = 1
 
 
 converged_at = 0
 '''
 INSTANCE DATA FOR JOB SHOP
 '''
+
+machine_data = benchmarks.pinedo['machine_data']
+ptime_data = benchmarks.pinedo['ptime_data']
 
 # Pinedo book first example
 # machine_data = [0,1,2,3, 1,0,3,2, 0,1,3,2]
@@ -101,8 +109,8 @@ INSTANCE DATA FOR JOB SHOP
 
 
 # LAWRENCE la01 10*5
-machine_data = [1, 0, 4, 3, 2,  0, 3, 4, 2, 1,  3, 4, 1, 2, 0,  1, 0, 4, 2, 3,  0, 3, 2, 1, 4,  1, 2, 4, 0, 3,  3, 4, 1, 2, 0,  2, 0, 1, 3, 4,  3, 1, 4, 0, 2,  4, 3, 2, 1, 0]
-ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55, 79, 66, 77, 83, 34, 64, 19, 37, 54, 43, 79, 92, 62, 69, 77, 87, 87, 93, 38, 60, 41, 24, 83, 17, 49, 25, 44, 98, 77, 79, 43, 75, 96]
+# machine_data = [1, 0, 4, 3, 2,  0, 3, 4, 2, 1,  3, 4, 1, 2, 0,  1, 0, 4, 2, 3,  0, 3, 2, 1, 4,  1, 2, 4, 0, 3,  3, 4, 1, 2, 0,  2, 0, 1, 3, 4,  3, 1, 4, 0, 2,  4, 3, 2, 1, 0]
+# ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55, 79, 66, 77, 83, 34, 64, 19, 37, 54, 43, 79, 92, 62, 69, 77, 87, 87, 93, 38, 60, 41, 24, 83, 17, 49, 25, 44, 98, 77, 79, 43, 75, 96]
 
 # LAWRENCE la02 10*5
 # machine_data = [0, 3, 1, 4, 2, 4, 2, 0, 1, 3, 1, 2, 4, 0, 3, 2, 1, 4, 0, 3, 4, 0, 3, 2, 1, 1, 0, 4, 3, 2, 4, 1, 3, 0, 2, 1, 0, 2, 3, 4, 4, 0, 2, 1, 3, 4, 2, 1, 3, 0]
@@ -144,7 +152,7 @@ ptime_data = [21, 53, 95, 55, 34, 21, 52, 16, 26, 71, 39, 98, 42, 31, 12, 77, 55
 
 
 '''
-Distances between machines for Pinedo book first example
+Distances between machines
 '''
 
 # TEST MATRIX 
@@ -155,52 +163,12 @@ Distances between machines for Pinedo book first example
 #     [4,4,2,0]
 # ])
 
-# WAREHOUSE MATRIX FOR GAZEBO SIMULATION
-# distance_matrix = np.array([
-#     [0, 5.16, 10.258, 10.258, 6.12, 9.258],
-#     [5.16, 0, 10.258, 10.258, 6.12, 9.258],
-#     [10.258, 10.258, 0, 5.16, 11.218, 6.86],
-#     [10.258, 10.258, 5.16, 0, 11.218, 6.86],
-#     [6.12, 6.12, 11.218, 11.218, 0, 10.22],
-#     [9.258, 9.258, 6.86, 6.86, 10.22, 0]
-# ])
-
-
-# distance_matrix = np.array([
-#     [0,0,0,0,0,0],
-#     [0,0,0,0,0,0],
-#     [0,0,0,0,0,0],
-#     [0,0,0,0,0,0]
-# ])
-
-
 
 if enable_travel_time:
-    # distance_matrix = np.array([
-    #     [0, 5.16, 10.258, 10.258, 6.12, 9.258],
-    #     [5.16, 0, 10.258, 10.258, 6.12, 9.258],
-    #     [10.258, 10.258, 0, 5.16, 11.218, 6.86],
-    #     [10.258, 10.258, 5.16, 0, 11.218, 6.86],
-    #     [6.12, 6.12, 11.218, 11.218, 0, 10.22],
-    #     [9.258, 9.258, 6.86, 6.86, 10.22, 0]
-    # ])
-    
-    # PAPER MATRIX
-    distance_matrix = np.array([
-        [0, 5, 10, 10, 6, 9],
-        [5, 0, 10, 10, 6, 9],
-        [10, 10, 0, 5, 11, 6],
-        [10, 10, 5, 0, 11, 6],
-        [6, 6, 11, 11, 0, 10],
-        [9, 9, 6, 6, 10, 0]
-    ])
+
+    distance_matrix = distances.four_machine_matrix
 else:
-    distance_matrix = np.array([
-    [0,0,0,0,0,0],
-    [0,0,0,0,0,0],
-    [0,0,0,0,0,0],
-    [0,0,0,0,0,0]
-])
+    distance_matrix = distances.empty_matrix
 
 
 def get_file(best_chromosome, processing_time, converged_at):
@@ -209,7 +177,7 @@ def get_file(best_chromosome, processing_time, converged_at):
     if converged_at == 0:
         converged_at = processing_time
     
-    directory = 'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la01'        # CHANGE SAVING DIRECTORY
+    directory = 'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la23'        # CHANGE SAVING DIRECTORY
     
     filepath = os.path.join(directory, filename)
     
@@ -736,6 +704,7 @@ def PlotGanttChar_with_amr(chromosome):
     ax.set_ylabel('Machine', fontweight='bold', loc='top', color='magenta', fontsize=16)
     ax.set_ylim(-0.5, m - 0.5)
     ax.set_yticks(range(m), minor=False)
+    ax.set_yticklabels(range(1, m + 1), minor=False)
     ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
     
     ax.set_xlim(0, Cmax + 2)
@@ -745,7 +714,7 @@ def PlotGanttChar_with_amr(chromosome):
     tmpTitle = f'Job Shop Scheduling (m={m}; n={n}; AMRs:{num_amrs}; Cmax={round(Cmax, 2)}; )'
     ax.set_title(tmpTitle, size=20, color='blue')
 
-    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
+    colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver', 'lavender', 'turquoise', 'orchid']
 
     for i in range(m):
         joblen = len(chromosome.machine_list[i].operationlist)
@@ -756,8 +725,7 @@ def PlotGanttChar_with_amr(chromosome):
                 ax.broken_barh([(ST, j.Pj)], (-0.3 + i, 0.6), facecolor=colors[j.job_number], linewidth=1, edgecolor='black')
                 ax.broken_barh([(j.Cj, j.travel_time)], (-0.3 + i, 0.6), facecolor='black', linewidth=1, edgecolor='black')
                 
-                ax.text(ST + (j.Pj / 2 - 0.3), i + 0.03, '{}'.format(j.job_number), fontsize=18)
-    
+                ax.text(ST + (j.Pj / 2 - 0.3), i + 0.03, '{}'.format(j.job_number + 1), fontsize=18)
     
     # Top Gantt chart with custom y-ticks
     top_ax = axs[1]
@@ -765,18 +733,15 @@ def PlotGanttChar_with_amr(chromosome):
     top_ax.set_xlabel('Time', fontweight='bold', loc='right', color='red', fontsize=16)
     top_ax.set_ylim(-0.5, num_amrs - 0.5)
     top_ax.set_yticks(range(num_amrs), minor=False)
+    top_ax.set_yticklabels(range(1, num_amrs + 1), minor=False)  # Corrected y-tick labels for AMRs
     top_ax.tick_params(axis='y', labelcolor='magenta', labelsize=16)
     top_ax.set_xlim(0, Cmax + 2)
     top_ax.tick_params(axis='x', labelcolor='red', labelsize=16)
     top_ax.grid(True)
 
-    # Example data for the top Gantt chart
-    top_colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver']
-    # top_ax.broken_barh([(5, 10)], (-0.3, 0.6), facecolor=top_colors[0], linewidth=1, edgecolor='black')
-    # top_ax.text(10, 0.03, '0', fontsize=18)
-    # top_ax.broken_barh([(15, 20)], (0.7, 0.6), facecolor=top_colors[1], linewidth=1, edgecolor='black')
-    # top_ax.text(25, 1.03, '1', fontsize=18)
-    
+    # Plot the AMR jobs
+    top_colors = ['orange', 'deepskyblue', 'indianred', 'limegreen', 'slateblue', 'gold', 'violet', 'grey', 'red', 'magenta', 'blue', 'green', 'silver', 'lavender', 'turquoise', 'orchid']
+
     for i in range(num_amrs):
         joblen = len(chromosome.amr_list[i].job_objects)
         for k in range(joblen):
@@ -785,14 +750,14 @@ def PlotGanttChar_with_amr(chromosome):
             duration = j.job_completion_time - j.job_start_time
             if duration != 0:
                 top_ax.broken_barh([(ST, duration)], (-0.3 + i, 0.6), facecolor=top_colors[j.job_number], linewidth=1, edgecolor='black')
-                top_ax.text(ST + (duration) / 2 , i - 0.2, '{}'.format(j.job_number), fontsize=14, ha = 'center')
+                top_ax.text(ST + (duration) / 2 , i - 0.2, '{}'.format(j.job_number + 1), fontsize=14, ha='center')
 
     plt.tight_layout()
     
     if create_txt_file:
         # CHANGE DIRECTORY FOR SAVING FIGURE
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = f'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la01\\gantt{timestamp}'
+        filename = f'E:\\Python\\JobShopGA\\Results\\pc0.6pm0.5\\la23\\gantt{timestamp}'
         plt.savefig(filename)
     # plt.show()
     
@@ -1498,7 +1463,6 @@ def main2():
 For testing with multiple runs
 '''
 def run_tests():
-    runs = 1
     for _ in range(runs):
         main2()
         

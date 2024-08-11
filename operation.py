@@ -32,13 +32,13 @@ class Operation:
             if self.operation_number != len(jobs[self.job_number].operations) - 1:
                 if jobs[self.job_number].operations[self.operation_number + 1].Pj == 0:
                     
-                    distance = distance_matrix[source][5] + distance_matrix[5][4]  
+                    distance = distance_matrix[source][distance_matrix.shape[0]- 1] + distance_matrix[distance_matrix.shape[0] - 1][distance_matrix.shape[0] - 2]  
                     
                     return distance/velocity
                     
             if self.operation_number == len(jobs[self.job_number].operations) - 1:
                 
-                distance = distance_matrix[source][5] + distance_matrix[5][4]
+                distance = distance_matrix[source][distance_matrix.shape[0]- 1] + distance_matrix[distance_matrix.shape[0] - 1][distance_matrix.shape[0] - 2]
             
             else:
                 dest = jobs[self.job_number].operations[self.operation_number + 1].machine

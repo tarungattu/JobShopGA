@@ -388,7 +388,7 @@ def process_chromosome(chromosome):
     operation_index_list = induv_getJobindex(ranked_list)
     
     # CASE 1
-    operation_index_list = [1,1,2,2,2,0,1,0,0,1, 0, 2]
+    operation_index_list = [0, 1, 0, 1, 2, 2, 1, 2, 0, 1, 2, 0]
     
     
     install_operations(jobs)
