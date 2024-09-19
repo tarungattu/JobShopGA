@@ -27,7 +27,7 @@ Parameters are HERE
 '''
 m = 4
 n = 3
-num_amrs = 2
+num_amrs = 3
 N = 50
 pc = 0.7
 pm = 0.5
@@ -1300,7 +1300,7 @@ def main1():
 '''
 Optimized loop main program
 '''
-def main2():
+def GeneticAlgorithm():
     
     # Record the start time
     start_time = time.time()
@@ -1464,7 +1464,7 @@ For testing with multiple runs
 '''
 def run_tests():
     for _ in range(runs):
-        main2()
+        GeneticAlgorithm()
         
 
 if __name__ == '__main__':
