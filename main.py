@@ -5,12 +5,16 @@ import distances
 def main():
     machine_data = benchmarks.pinedo['machine_data']
     ptime_data = benchmarks.pinedo['ptime_data']
-    scheduler1 = JobShopScheduler(4, 3, 1, 50, 0.7, 0.5, 100, machine_data, ptime_data)    
+    scheduler1 = JobShopScheduler(4, 3, 2, 50, 0.7, 0.5, 100, machine_data, ptime_data)    
     
     scheduler1.set_distance_matrix(distances.four_machine_matrix)
-    scheduler1.display_schedule = 0
+    scheduler1.display_schedule = 1
+    scheduler1.enable_travel_time = 1
     
     scheduler2 = JobShopScheduler(4, 3, 3, 50, 0.7, 0.5, 100, machine_data, ptime_data)
+    scheduler2.enable_travel_time = 1
+    scheduler2.display_schedule = 0
+    scheduler2.set_distance_matrix(distances.four_machine_matrix)
     chromsome1 = scheduler1.GeneticAlgorithm()
     chromsome2 = scheduler2.GeneticAlgorithm()
     
@@ -19,7 +23,8 @@ def main():
     
     print('AMR MACHINE SEQUENCES')
     print(chromsome1.amr_machine_sequences)
-    print(other_chromosome.amr_machine_sequences)
+    print(chromsome1.amr_ptime_sequences)
+    # print(other_chromosome.amr_machine_sequences)
     
     # print(scheduler1.distance_matrix)
     

@@ -696,6 +696,7 @@ class JobShopScheduler():
                     amr_machines.append(o.machine)
                     amr_ptimes.append(o.Pj)
                 amr_machines.extend([-2, -1])
+                amr_ptimes.extend([3, 3])
             amr.machine_sequence = amr_machines
             amr.ptime_sequence = amr_ptimes
             glob_amr_machine.append(amr_machines)
