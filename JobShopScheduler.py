@@ -56,6 +56,16 @@ class JobShopScheduler():
         self.amr_assignments = None
         
         
+    # recieve number of completed jobs and reschedule the remaining jobs, also mention number of amrs present during rescheduling.
+    def reschedule(self, num_completed_jobs, num_amrs):
+        self.machine_data = self.machine_data[num_completed_jobs * self.m:]
+        self.ptime_data = self.ptime_data[num_completed_jobs * self.m:]
+        self.operation_data = self.create_operation_data(self.machine_data, self.ptime_data, self.m)
+        self.n = self.n - num_completed_jobs
+        self.num_amrs = num_amrs
+        
+        
+        
     def set_distance_matrix(self, matrix):
         self.distance_matrix = matrix
                     
